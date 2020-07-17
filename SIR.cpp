@@ -346,3 +346,22 @@ vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpe
 		return voidCast;
 	}
 }
+
+void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness){
+	int bestParticle(0);
+	double bestFitness(1e13);
+	for(int i=0;i<numOfParticles;i++){
+		if(fitnessCollection[i]<bestFitness){
+			bestFitness=fitnessCollection[i];
+			bestParticle=i;
+		}
+	}
+	if(bestFitness<globalBestFitness){
+		for(int i=0;i<numOfParameters;i++){
+			parameterPassVector[i]=parameterMatrixHold[bestParticle*numOfParameters+i];
+		}
+		globalBestFitness=bestFitness;
+	}
+}
+	
+	
