@@ -71,7 +71,7 @@ int main(int argc, char** argv){
 	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(4);
+	const int numOfRuns(5);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -178,8 +178,10 @@ int main(int argc, char** argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
 	
 	ofstream outFile;
+	ofstream monitorFile;
 	if(taskID==0){
 		outFile.open(outputFolder+customString+"bestParticles"+".txt");
+		monitorFile.open(outputFolder+"fitnessTests.txt");
 	}
 	
 
@@ -277,6 +279,10 @@ int main(int argc, char** argv){
 					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					if(taskID==0){
 						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
+						for(int i=0;i<numOfParticles;i++){
+							monitorFile<<fitnessCollection[i]<<" ";
+						}
+						monitorFile<<endl;
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -334,11 +340,16 @@ int main(int argc, char** argv){
 					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					if(taskID==0){
 						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
+						for(int i=0;i<numOfParticles;i++){
+							monitorFile<<fitnessCollection[i]<<" ";
+						}
+						monitorFile<<endl;
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
 					
 					threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
+
+
 					
 				}
 			}
@@ -353,6 +364,7 @@ int main(int argc, char** argv){
 
 	}
 	outFile.close();
+	monitorFile.close();
     
 	MPI_Finalize();
 	

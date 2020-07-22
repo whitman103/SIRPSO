@@ -411,7 +411,6 @@ vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle
 		specNum=(*inReactionObject).resetSpecies;
 		double currentTime(0);
 		int reportIndex(0);
-		cout<<run<<endl;
 		do{
 			tuple<int,double> hold=(*inReactionObject).PerformTimeStep2(specNum);
 			currentTime+=get<1>(hold);
