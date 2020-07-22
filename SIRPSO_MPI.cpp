@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(2);
+	const int numOfRuns(10);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
