@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 	vector<double> initBounds={.5,.1,.1,0.01,0.05};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(50);
+	const int numOfIterations(250);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
@@ -109,6 +109,7 @@ int main(int argc, char** argv){
 		{
 			if(!exNoise){
 				transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<int>(),std::placeholders::_1,scalingFactor));
+				resetSpecies=speciesVector;
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 			else{
