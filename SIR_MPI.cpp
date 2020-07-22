@@ -258,16 +258,27 @@ void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, dou
     }
 }
 
-double fitnessFunction(vector<vector<double> >& trueIn, vector<vector<double> >& testIn){
+double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean){
     double interHold(0);
-    for(int i=0;i<(int)trueIn.size();i++){
-        for(int j=0;j<(int)trueIn[i].size();j++){
-            interHold+=pow(trueIn[i][j]-testIn[i][j],2);
+    for(int i=0;i<(int)trueMean.size();i++){
+        for(int j=0;j<(int)trueMean[i].size();j++){
+            interHold+=pow(trueMean[i][j]-testMean[i][j],2);
         }
     }
     return interHold;
-
 }
+
+double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> >& testVar){
+    double interHold(0);
+    for(int i=0;i<(int)trueMean.size();i++){
+        for(int j=0;j<(int)trueMean[i].size();j++){
+            interHold+=pow(trueMean[i][j]-testMean[i][j],2)+pow(trueVar[i][j]-testVar[i][j],2)/(double)trueMean[i].size();
+        }
+    }
+    return interHold;
+}
+
+
 
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix){
     vector<vector<double> > choleskyOut(inMatrix.size(),vector<double>(inMatrix[0].size(),0));

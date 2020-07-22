@@ -35,7 +35,7 @@ inline int randSite(int size){
 
 
 
-int main(int argc, char* argv[]){
+int main(int argc, char** argv){
 
     generator.seed(time(NULL));
     string localPath=std::filesystem::current_path();
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
 	const int numOfParameters(5);
 	tuple<double,double,double,double,double> initParameters=make_tuple(0.05,0.05,0.0005,0.02,0.05);
 	vector<double> initBounds={1,.5,.5,0.5,0.5};
-	const int numOfParticles(20);
+	const int numOfParticles(argv[1]);
 	//Number of PSO iterations
 	const int numOfIterations(100);
 	//Number of Gillespie samples to use for distributions
@@ -131,7 +131,6 @@ int main(int argc, char* argv[]){
 			vector<double> resetConsts=ReactionObject1.reactConsts;
 			speciesVector=resetSpecies;
 			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
-			
 		}
 		break;
 		default:
@@ -287,6 +286,7 @@ int main(int argc, char* argv[]){
 
 	outRunge.close();
     
+	MPI_Finalize();
 
     return 0;
 }

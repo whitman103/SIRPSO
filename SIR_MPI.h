@@ -86,7 +86,9 @@ double fourthInteraction(Particle* currentParticle, vector<double>& species);
 
 void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, double currentTime, double stoppingTime, double deltaT);
 
-double fitnessFunction(vector<vector<double> >& trueIn, vector<vector<double> >& testIn);
+double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean);
+
+double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> > testVar);
 
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix);
 
