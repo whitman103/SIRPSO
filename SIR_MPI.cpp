@@ -386,12 +386,10 @@ void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHol
 			bestParticle=i;
 		}
 	}
-	if(bestFitness<globalFitness){
-		for(int i=0;i<numOfParameters;i++){
-			parameterPassVector[i]=parameterMatrixHold[bestParticle*numOfParameters+i];
-		}
-		globalFitness=bestFitness;
+	for(int i=0;i<numOfParameters;i++){
+		parameterPassVector[i]=parameterMatrixHold[bestParticle*numOfParameters+i];
 	}
+	globalFitness=bestFitness;
 }
 	
 	
