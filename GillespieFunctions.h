@@ -20,11 +20,12 @@ class Gillespie{
 	void specChange(vector<int>&,int,vector<vector<int> >);
 	void initializeReactions(string,vector<vector<int> > &,vector<vector<int> >&);
 	int r1choice(double, double,vector<double>);
-	mt19937 generator;
+	std::mt19937 generator;
 	void initializeData (string consts, vector < double >&reactConsts,
-	vector<int>&specNum);
+	vector<int>specNum);
 	vector<double> reactConsts;
 	vector<vector<int> > changeCoeffs;
+	vector<int> resetSpecies;
 	
 	
 	private:

@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <string>
+#include <functional>
 #include <map>
 #include <mpi.h>
 	using namespace std;
@@ -50,23 +51,24 @@ int main(int argc, char** argv){
     string customString("NoDynamicsLater_");
     
 
-    bool exNoise(true);
+    bool exNoise(false);
 	//T, I, V, R
 	const int numOfSpecies(4);
 	vector<double> speciesVector={0.95,.05,1.,0.};
+	int scalingFactor(1000);
 	vector<double> resetSpecies=speciesVector;
 	//beta, delta, c, p, gamma
 	const int numOfParameters(5);
-	tuple<double,double,double,double,double> initParameters=make_tuple(0.05,0.05,0.0005,0.02,0.05);
-	vector<double> initBounds={1,.5,.5,0.5,0.5};
-	const int numOfParticles(argv[1]);
+	tuple<double,double,double,double,double> initParameters=make_tuple(0.1,0.05,0.05,0.0025,0.025);
+	vector<double> initBounds={.5,.1,.1,0.01,0.05};
+	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(100);
+	const int numOfIterations(3);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(40);
+	const int numOfRuns(1);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -88,12 +90,12 @@ int main(int argc, char** argv){
 	map<string,int> styleMap;
 	styleMap["RungeKutta"]=0;
 	styleMap["Gillespie"]=1;
-	int solutionStyle(0);
+	int solutionStyle(1);
 	SolStruct solutionStructure;
 	solutionStructure.timeIncrement=timeIncrement;
 	solutionStructure.stoppingTimes=stoppingTimes;
 
-	Particle trueParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters);
+	Particle trueParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
 
 	
 	vector<vector<double> > trueArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
@@ -103,6 +105,7 @@ int main(int argc, char** argv){
 		case 0:
 		{
 			if(!exNoise){
+				transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<int>(),std::placeholders::_1,scalingFactor));
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 			else{
@@ -113,6 +116,7 @@ int main(int argc, char** argv){
 						baseNormal[i]=normalGenerator();
 					}
 					baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
+					transform(baseNormal.begin(),baseNormal.end(),baseNormal.begin(),bind(std::multiplies<double>(),std::placeholders::_1,(double)scalingFactor));
 					vector<vector<double> > noiseData=generateData(&trueParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
 					for(int i=0;i<(int)trueArray.size();i++){
 						for(int j=0;j<(int)trueArray[i].size();j++){
@@ -125,21 +129,32 @@ int main(int argc, char** argv){
 		break;
 		case 1:
 		{
-			Gillespie ReactionObject1(inSirCoeffs);
-			ReactionObject1.initializeData(inSirConsts,ReactionObject1.reactConsts,speciesVector);
+			Gillespie ReactionObject1("SIRCoeffs");
+			
+			transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(multiplies<double>(),placeholders::_1,scalingFactor));
 			vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
+			for(int i=0;i<(int)intSpecies.size();i++){
+				cout<<intSpecies[i]<<endl;
+			}
+			ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpecies);
 			vector<double> resetConsts=ReactionObject1.reactConsts;
-			speciesVector=resetSpecies;
 			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
 		}
 		break;
 		default:
 		return 0;
 	}
-		
 	
+	ofstream gillespie("trueTestData.txt");
+	for(int i=0;i<(int)trueArray.size();i++){
+		for(int j=0;j<(int)trueArray[i].size();j++){
+			gillespie<<trueArray[i][j]<<" ";
+		}
+		gillespie<<endl;
+	}
+	gillespie.close();
 
-
+	
 
 	double inDelta(10);
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
@@ -155,11 +170,12 @@ int main(int argc, char** argv){
 	}
 	outRunge<<endl;
 	
+	/*
 	double globalBestFitness(1e26);
 	int sizeOfParameterVector(numOfParameters);
 	double fitnessCollection[numOfParticles];
-	double parameterPassVector[(sizeOfParameterVector)];
-	double parameterMatrixHold[(sizeOfParameterVector)*numOfParticles];
+	double parameterPassVector[sizeOfParameterVector];
+	double parameterMatrixHold[sizeOfParameterVector*numOfParticles];
 	
 	int nTasks(-1);
 	int taskID(-1);
@@ -174,7 +190,7 @@ int main(int argc, char** argv){
 	for(int run=0;run<numOfRuns;run++){
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
-		Particle threadParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters);
+		Particle threadParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
 
 		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 			threadParticle.currentSolution[i]=randPull()*initBounds[i];
@@ -274,19 +290,64 @@ int main(int argc, char** argv){
 			break;
 			case 1:
 			{
+				vector<vector<double> > testArray;
+				vector<vector<double> > testVar;
+				Gillespie threadReaction("SIRCoeffs");
+			
+				vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
+				threadReaction.initializeData("SIRConsts",threadReaction.reactConsts,intSpecies);
+				vector<double> resetConsts=threadReaction.reactConsts;
+				tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+
+				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				threadParticle.bestFitness=threadParticle.currentFitness;
+				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+					parameterPassVector[i]=threadParticle.bestSolution[i];
+				}
 				
+				MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				
+				if(taskID==0){
+					checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness, numOfParameters);
+				}
+				
+				MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
+				
+				threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
+
+				for(int iteration=0;iteration<numOfIterations;iteration++){
+					tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+
+					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+					if(threadParticle.currentFitness<threadParticle.bestFitness){
+						threadParticle.bestSolution=threadParticle.currentSolution;
+						threadParticle.bestFitness=threadParticle.currentFitness;
+					}
+					for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+						parameterPassVector[i]=threadParticle.bestSolution[i];
+					}
+
+					MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+					if(taskID==0){
+						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
+					}
+					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+					
+					threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
+					
+				}
 			}
 		}
 
-		for(int i=0;i<numOfParameters;i++){
-			outRunge<<parameterPassVector[i]<<" ";
-		}
-		outRunge<<endl;
 	}
 
 	outRunge.close();
     
 	MPI_Finalize();
+	*/
 
     return 0;
 }

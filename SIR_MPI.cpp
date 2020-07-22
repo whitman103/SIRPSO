@@ -136,7 +136,7 @@ void FuzzyTree::calculatePhi(double lastFitness, double currentFitness){
 	phi*=(min(currentFitness,phiNormalization)-min(lastFitness,phiNormalization))/phiNormalization;
 }
 
-Particle::Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters){
+Particle::Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize){
     currentSolution.resize(numOfParameters);
     bestSolution.resize(numOfParameters);
     currentVelocity.resize(numOfParameters);
@@ -154,6 +154,7 @@ Particle::Particle(int numOfParameters, vector<double> initBounds, vector<double
 	currentSolution[3]=p;
 	gamma=get<4>(initParameters);
 	currentSolution[4]=gamma;
+	scalingFactor=scalingSize;
 
 }
 
@@ -222,6 +223,12 @@ double thirdInteraction(Particle* currentParticle, vector<double>& species){
 
 double fourthInteraction(Particle* currentParticle, vector<double>& species){
 	return (*currentParticle).c*species[1]-(*currentParticle).gamma*species[3];
+}
+
+vector<double> Particle::convertFromParticleToGillespie(){
+	unwrapParameters();
+	vector<double> outConsts={beta/(double)scalingFactor,gamma,c,p,delta};
+	return outConsts;
 }
 
 void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, double currentTime, double stoppingTime, double deltaT){
@@ -308,6 +315,9 @@ vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix){
 void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix, string dataPath){
     int inSize(0);
     ifstream inData(dataPath+".txt");
+	if(!inData.good()){
+		cout<<"failed to load data for covariance matrix"<<endl;
+	}
     inData>>inSize;
     outMeans.resize(inSize);
     for(int i=0;i<inSize;i++){
@@ -384,46 +394,56 @@ void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHol
 	
 vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
 	vector<vector<vector<double> > > outData(reportTimes.size()-1,vector<vector<double> > (specNum.size(), vector<double> (numOfRuns,0)));
-	(*inReactionObject).reactConsts=(*inParticle).currentSolution;
-	double currentTime(0);
-	int reportIndex(0);
-	do{
-		tuple<int,double> hold=ReactionObject1.PerformTimeStep2(specNum);
-		lastReaction=get<0>(hold);
-		runTime+=get<1>(hold);
-		ReactionObject1.specChange(specNum,get<0>(hold),ReactionObject1.changeCoeffs);
-		
-		
-		if(get<1>(hold)<0){
-			cout<<"negative time"<<endl;
-		}
-		if(runTime>reportTimes[reportIndex]){
-			for(int i=0;i<(int)specNum.size();i++){
-				testDist[reportIndex][i][run]=specNum[i];
+	(*inReactionObject).reactConsts=(*inParticle).convertFromParticleToGillespie();
+	for(int run=0;run<numOfRuns;run++){
+		specNum=(*inReactionObject).resetSpecies;
+		double currentTime(0);
+		int reportIndex(0);
+		do{
+			tuple<int,double> hold=(*inReactionObject).PerformTimeStep2(specNum);
+			currentTime+=get<1>(hold);
+			
+			
+			
+			if(get<1>(hold)<0){
+				for(int index=reportIndex;index<(int)reportTimes.size();index++){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[index][i][run]=specNum[i];
+					}
+				}
+				reportIndex=(int)reportTimes.size();
 			}
-			reportIndex++;
-		}
-	}while(reportIndex<reportTimes.size());
+			else{
+				(*inReactionObject).specChange(specNum,get<0>(hold),(*inReactionObject).changeCoeffs);
+				if(currentTime>reportTimes[reportIndex+1]){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[reportIndex][i][run]=specNum[i];
+					}
+					reportIndex++;
+				}
+			}
+		}while(reportIndex<(int)reportTimes.size()-1);
+	}
 	
 	return outData;
 }
 
-tuple<vector<vector<double> >, vector<vector<double> > calculateMeansAndVar(vector<vector<vector<double> > >& inDist){
+tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<double> > >& inDist){
 	vector<vector<double> > outMeans(inDist.size(), vector<double> (inDist[0].size(),0));
 	vector<vector<double> > outVar=outMeans;
 	double interHold(0);
-	for(int i=0;i<(int)inData.size();i++){
-		for(int j=0;j<(int)inData[i].size();j++){
+	for(int i=0;i<(int)inDist.size();i++){
+		for(int j=0;j<(int)inDist[i].size();j++){
 			interHold=0;
-			for(int k=0;k<(int)inData[i][j].size();k++){
-				interHold+=inData[i][j][k]/(double)inData[i][j].size();
+			for(int k=0;k<(int)inDist[i][j].size();k++){
+				interHold+=inDist[i][j][k]/(double)inDist[i][j].size();
 			}
 			outMeans[i][j]=interHold;
 			interHold=0;
-			for(int k=0;k<(int)inData[i][j].size();k++){
-				interHold+=pow(inData[i][j][k]-outMeans[i][j],2);
+			for(int k=0;k<(int)inDist[i][j].size();k++){
+				interHold+=pow(inDist[i][j][k]-outMeans[i][j],2);
 			}
-			outVar[i][j]=sqrt(interHold);
+			outVar[i][j]=sqrt(interHold)/(double)inDist[i][j].size();
 		}
 	}
 	
@@ -434,8 +454,8 @@ tuple<vector<vector<double> >, vector<vector<double> > calculateMeansAndVar(vect
 
 
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
-	
 	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle,inReactionObject,reportTimes,specNum,numOfRuns);
 	
 	return calculateMeansAndVar(inData);
 }
+

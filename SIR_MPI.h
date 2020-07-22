@@ -56,7 +56,7 @@ class FuzzyTree{
 
 class Particle{
     public:
-    Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters);
+    Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
 	~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
@@ -70,6 +70,8 @@ class Particle{
 
     void dumpParticleDetails(string rootFolder, string id);
     double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
+	vector<double> convertFromParticleToGillespie();
+	int scalingFactor;
 
     private:
 };

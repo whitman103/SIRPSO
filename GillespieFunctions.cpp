@@ -59,7 +59,7 @@ int Gillespie::r1choice(double a0, double rand,vector<double> avector){
     }
 	return indicator;
 }
-void Gillespie::initializeData (string consts, vector < double >&reactConsts,vector < int >&specNum)
+void Gillespie::initializeData (string consts, vector < double >&reactConsts,vector < int >specNum)
 {
   ifstream myfile;
   myfile.open (consts + ".txt");
@@ -69,11 +69,11 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
   int N;
   myfile >> N;
   int inthold;
-  for (int i = 0; i < N; i++)
+ /* for (int i = 0; i < N; i++)
     {
       myfile >> inthold;
       specNum.push_back (inthold);
-    }
+    }*/
   int M;
   myfile >> M;
   double doublehold;
@@ -83,6 +83,7 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
       reactConsts.push_back (doublehold);
     }
   myfile.close ();
+  resetSpecies=specNum;
 }
 
 double Gillespie::partial_sum(vector<double> v, int index){
