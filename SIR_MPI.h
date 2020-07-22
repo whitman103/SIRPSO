@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <boost/random/mersenne_twister.hpp>
+#include "GillespieFunctions.h"
 using boost::mt19937;
 
 
@@ -68,7 +69,7 @@ class Particle{
     void unwrapParameters();
 
     void dumpParticleDetails(string rootFolder, string id);
-    double performUpdate(boost::mt19937* inRand, vector<double>& globalBest, FuzzyTree* fuzzyStruct);
+    double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
 
     private:
 };
@@ -91,7 +92,7 @@ vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix);
 
 void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix, string dataPath);
 
-vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean);
+vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn);
 
 typedef struct{
 	bool RungeOrGille;
@@ -101,7 +102,13 @@ typedef struct{
 
 vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpecies, SolStruct* solChars, int styleFlag);
 
-void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness);
+void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness, int numOfParameters);
+
+vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns);
+
+tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<double> > >& inDist);
+
+tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns);
 
 
 

@@ -10,7 +10,7 @@
 using namespace std;
 
 
-#include "SIR.h"
+#include "SIR_MPI.h"
 
 //Values taken directly from Nobile2017 paper
 FuzzyTree::FuzzyTree(double inDelta){
@@ -170,7 +170,7 @@ double sgn(double in){
 
 
 
-double Particle::performUpdate(boost::mt19937* inRand, vector<double>& globalBest, FuzzyTree* fuzzyStruct){
+double Particle::performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct){
     for(int i=0;i<(int)currentSolution.size();i++){
         double proposedUpdate(0);
         double rand1((double)(*inRand)()/(double)(*inRand).max());
@@ -312,7 +312,7 @@ void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix,
     inMatrix=interMatrix;
 }
 
-vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean){
+vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn){
     vector<double> outRand(inRand.size(),0);
 
 
@@ -322,6 +322,11 @@ vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inC
         }
         outRand[i]+=inMean[i];
     }
+	//Explicit changes to the setup 
+	outRand[0]=min(0.99, outRand[0]);
+	outRand[1]=1-outRand[0];
+	outRand[2]=inMean[2]*(1.+2.*(2.*(double)(*generatorIn)()/(double)(*generatorIn).max()-1.));
+	outRand[3]=0;
 
     return outRand;
 }
@@ -347,7 +352,7 @@ vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpe
 	}
 }
 
-void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness){
+void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness, int numOfParameters){
 	int bestParticle(0);
 	double bestFitness(1e13);
 	for(int i=0;i<numOfParticles;i++){
@@ -356,12 +361,70 @@ void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHol
 			bestParticle=i;
 		}
 	}
-	if(bestFitness<globalBestFitness){
+	if(bestFitness<globalFitness){
 		for(int i=0;i<numOfParameters;i++){
 			parameterPassVector[i]=parameterMatrixHold[bestParticle*numOfParameters+i];
 		}
-		globalBestFitness=bestFitness;
+		globalFitness=bestFitness;
 	}
 }
 	
 	
+	
+vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
+	vector<vector<vector<double> > > outData(reportTimes.size()-1,vector<vector<double> > (specNum.size(), vector<double> (numOfRuns,0)));
+	(*inReactionObject).reactConsts=(*inParticle).currentSolution;
+	double currentTime(0);
+	int reportIndex(0);
+	do{
+		tuple<int,double> hold=ReactionObject1.PerformTimeStep2(specNum);
+		lastReaction=get<0>(hold);
+		runTime+=get<1>(hold);
+		ReactionObject1.specChange(specNum,get<0>(hold),ReactionObject1.changeCoeffs);
+		
+		
+		if(get<1>(hold)<0){
+			cout<<"negative time"<<endl;
+		}
+		if(runTime>reportTimes[reportIndex]){
+			for(int i=0;i<(int)specNum.size();i++){
+				testDist[reportIndex][i][run]=specNum[i];
+			}
+			reportIndex++;
+		}
+	}while(reportIndex<reportTimes.size());
+	
+	return outData;
+}
+
+tuple<vector<vector<double> >, vector<vector<double> > calculateMeansAndVar(vector<vector<vector<double> > >& inDist){
+	vector<vector<double> > outMeans(inDist.size(), vector<double> (inDist[0].size(),0));
+	vector<vector<double> > outVar=outMeans;
+	double interHold(0);
+	for(int i=0;i<(int)inData.size();i++){
+		for(int j=0;j<(int)inData[i].size();j++){
+			interHold=0;
+			for(int k=0;k<(int)inData[i][j].size();k++){
+				interHold+=inData[i][j][k]/(double)inData[i][j].size();
+			}
+			outMeans[i][j]=interHold;
+			interHold=0;
+			for(int k=0;k<(int)inData[i][j].size();k++){
+				interHold+=pow(inData[i][j][k]-outMeans[i][j],2);
+			}
+			outVar[i][j]=sqrt(interHold);
+		}
+	}
+	
+	
+	return make_tuple(outMeans, outVar);
+}
+
+
+
+tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
+	
+	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle,inReactionObject,reportTimes,specNum,numOfRuns);
+	
+	return calculateMeansAndVar(inData);
+}

@@ -41,17 +41,19 @@
 ########################################################################### 
 
 # The base for the names of the makefile, executable command, etc.
-BASE=  SIRPSO
+BASE=  SIRPSO_MPI
 
 # Put all C++ (or other) source files here.  NO SPACES after continuation \'s.
 SRCS= \
-SIRPSO.cpp\
-SIR.cpp\
+SIRPSO_MPI.cpp\
+SIR_MPI.cpp\
+GillespieFunctions.cpp\
 
 
 # Put all header files here.  NO SPACES after continuation \'s.
 HDRS= \
-SIR.h
+SIR_MPI.h\
+GillespieFunctions.h
 
 
 # Put any input files you want to be saved in tarballs (e.g., sample files).
@@ -85,14 +87,14 @@ ZIPFILE= $(BASE).zip
 # LIBS          A list of libraries 
 #
 
-CXX= g++
+CXX= mpic++
 CFLAGS=  -g -O2 -std=c++17
 CWARNS= -Wall -W -Wshadow -fno-common 
 MOREFLAGS= -Wpedantic -Wpointer-arith -Wcast-qual -Wcast-align \
            -Wwrite-strings -fshort-enums 
 
 # add relevant libraries and link options
-LIBS=           
+LIBS= -L "C:\cygwin64\lib\\libmpi.dll.a"
 LDFLAGS= 
  
 ###########################################################################

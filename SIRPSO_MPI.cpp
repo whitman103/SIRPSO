@@ -30,8 +30,8 @@ inline int randSite(int size){
 	return generator()%size;
 }
 
-
-#include "SIR.h"
+#include "GillespieFunctions.h"
+#include "SIR_MPI.h"
 
 
 
@@ -45,12 +45,12 @@ int main(int argc, char* argv[]){
     boost::normal_distribution<> standardNormal(0,1);
     boost::mt19937 generator2;
     generator2.seed(generator());
-    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator,standardNormal);
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
 
     string customString("NoDynamicsLater_");
     
 
-    int noise(0);
+    bool exNoise(true);
 	//T, I, V, R
 	const int numOfSpecies(4);
 	vector<double> speciesVector={0.95,.05,1.,0.};
@@ -62,6 +62,8 @@ int main(int argc, char* argv[]){
 	const int numOfParticles(20);
 	//Number of PSO iterations
 	const int numOfIterations(100);
+	//Number of Gillespie samples to use for distributions
+	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
 	const int numOfRuns(40);
@@ -95,11 +97,12 @@ int main(int argc, char* argv[]){
 
 	
 	vector<vector<double> > trueArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
+	vector<vector<double> > trueVar=trueArray;
 	
 	switch(solutionStyle){
 		case 0:
 		{
-			if(noise==0){
+			if(!exNoise){
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 			else{
@@ -109,11 +112,7 @@ int main(int argc, char* argv[]){
 					for(int i=0;i<(int)baseNormal.size();i++){
 						baseNormal[i]=normalGenerator();
 					}
-					baseNormal=transformInit(baseNormal, inValues, speciesVector);
-					baseNormal[0]=min(0.99,baseNormal[0]);
-					baseNormal[1]=1-baseNormal[0];//Keeps total number of cells equal to 1
-					baseNormal[2]=speciesVector[2]*(1+.2*(2*randPull()-1));
-					baseNormal[3]=0;
+					baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
 					vector<vector<double> > noiseData=generateData(&trueParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
 					for(int i=0;i<(int)trueArray.size();i++){
 						for(int j=0;j<(int)trueArray[i].size();j++){
@@ -122,6 +121,17 @@ int main(int argc, char* argv[]){
 					}
 				}
 			}
+		}
+		break;
+		case 1:
+		{
+			Gillespie ReactionObject1(inSirCoeffs);
+			ReactionObject1.initializeData(inSirConsts,ReactionObject1.reactConsts,speciesVector);
+			vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
+			vector<double> resetConsts=ReactionObject1.reactConsts;
+			speciesVector=resetSpecies;
+			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
+			
 		}
 		break;
 		default:
@@ -136,15 +146,10 @@ int main(int argc, char* argv[]){
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
 
 	ofstream outRunge;
-	switch(noise){
-		case 0:
+	if(!exNoise){
 		outRunge.open(outputFolder+customString+"outRunge_noNoise.txt");
-		break;
-		case 1:
+	} else{
 		outRunge.open(outputFolder+customString+"outRunge_testNoise.txt");
-		break;
-		default:
-		return 0;
 	}
 	for(int i=0;i<(int)trueParticle.currentSolution.size();i++){
 		outRunge<<trueParticle.currentSolution[i]<<" ";
@@ -152,9 +157,8 @@ int main(int argc, char* argv[]){
 	outRunge<<endl;
 	
 	double globalBestFitness(1e26);
-	double globalBestSolution([numOfParameters]);
 	int sizeOfParameterVector(numOfParameters);
-	double fitnessCollection([numOfParticles]);
+	double fitnessCollection[numOfParticles];
 	double parameterPassVector[(sizeOfParameterVector)];
 	double parameterMatrixHold[(sizeOfParameterVector)*numOfParticles];
 	
@@ -182,9 +186,27 @@ int main(int argc, char* argv[]){
 			case 0:
 			{
 				//Initialize
-
+				vector<vector<double> > testArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
 				speciesVector=resetSpecies;
-				vector<vector<double> > testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+				if(!exNoise){
+					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+				}
+				else{
+					const int numSamples(2500);
+					for(int sample=0;sample<numSamples;sample++){
+						vector<double> baseNormal(numOfSpecies,0);
+						for(int i=0;i<(int)baseNormal.size();i++){
+							baseNormal[i]=normalGenerator();
+						}
+						baseNormal=transformInit(baseNormal, inValues, speciesVector,&generator);
+						vector<vector<double> > noiseData=generateData(&threadParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
+						for(int i=0;i<(int)testArray.size();i++){
+							for(int j=0;j<(int)testArray[i].size();j++){
+								testArray[i][j]+=noiseData[i][j]/(double)numSamples;
+							}
+						}
+					}
+				}
 
 				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
 				threadParticle.bestFitness=threadParticle.currentFitness;
@@ -197,20 +219,37 @@ int main(int argc, char* argv[]){
 				MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 				
 				if(taskID==0){
-					checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness);
+					checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness, numOfParameters);
 				}
 				
 				MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
 				
-				threadParticle.performUpdate(&generator,globalBestSolutions,&fuzzyStruct);
+				threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
 				
 
 				//Iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
-
 					speciesVector=resetSpecies;
-					vector<vector<double> > testArray=generateData(&threadParticle,speciesVector,&fuzzyStruct,styleMap["RungeKutta"]);
-
+					if(!exNoise){
+						testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+					}
+					else{
+						const int numSamples(2500);
+						for(int sample=0;sample<numSamples;sample++){
+							vector<double> baseNormal(numOfSpecies,0);
+							for(int i=0;i<(int)baseNormal.size();i++){
+								baseNormal[i]=normalGenerator();
+							}
+							baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
+							vector<vector<double> > noiseData=generateData(&threadParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
+							for(int i=0;i<(int)testArray.size();i++){
+								for(int j=0;j<(int)testArray[i].size();j++){
+									testArray[i][j]+=noiseData[i][j]/(double)numSamples;
+								}
+							}
+						}
+					}
+					
 					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
@@ -223,21 +262,25 @@ int main(int argc, char* argv[]){
 					MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					if(taskID==0){
-						checkForNewGlobalBest(fitnesscollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness);
+						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-					for(int particle=0;particle<(int)particleList.size();particle++){
-						particleList[particle].performUpdate(&generator,globalBestSolutions,&FuzzyStructure[particle]);
-					}
+					
+					threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
+					
 				}
 				
 			}
 			break;
+			case 1:
+			{
+				
+			}
 		}
 
-		for(int i=0;i<(int)globalBestSolutions.size();i++){
-			outRunge<<globalBestSolutions[i]<<" ";
+		for(int i=0;i<numOfParameters;i++){
+			outRunge<<parameterPassVector[i]<<" ";
 		}
 		outRunge<<endl;
 	}
