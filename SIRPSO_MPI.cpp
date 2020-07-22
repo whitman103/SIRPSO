@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 	vector<double> initBounds={.5,.1,.1,0.01,0.05};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(15);
+	const int numOfIterations(100);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
