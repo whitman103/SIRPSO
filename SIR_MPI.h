@@ -72,6 +72,8 @@ class Particle{
     double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
 	vector<double> convertFromParticleToGillespie();
 	int scalingFactor;
+	void divideBeta();
+	void multiplyBeta();
 
     private:
 };

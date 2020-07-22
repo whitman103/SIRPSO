@@ -235,9 +235,18 @@ vector<double> Particle::convertFromParticleToGillespie(){
 	return outConsts;
 }
 
+void Particle::divideBeta(){
+	beta=beta/(double)scalingFactor;
+}
+
+void Particle::multiplyBeta(){
+	beta=beta*(double)scalingFactor;
+}
+
 void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, double currentTime, double stoppingTime, double deltaT){
     int numSpecies=speciesVec.size();
     (*currentParticle).unwrapParameters();
+	(*currentParticle).divideBeta();
     int n=(int)(((stoppingTime-currentTime))/(deltaT));
 
     vector<double (*)(Particle*,vector<double>&)> interactionPointer=(*currentParticle).interactionFunctions;
@@ -267,6 +276,7 @@ void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, dou
             speciesVec[i]+=(k1[i]/6.+k2[i]/3.+k3[i]/3.+k4[i]/6.);
         }
     }
+	(*currentParticle).multiplyBeta();
 }
 
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean){
@@ -401,10 +411,10 @@ vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle
 		specNum=(*inReactionObject).resetSpecies;
 		double currentTime(0);
 		int reportIndex(0);
+		cout<<run<<endl;
 		do{
 			tuple<int,double> hold=(*inReactionObject).PerformTimeStep2(specNum);
 			currentTime+=get<1>(hold);
-			
 			
 			
 			if(get<1>(hold)<0){

@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "functional": "cpp",
-        "xstddef": "cpp"
+        "xstddef": "cpp",
+        "algorithm": "cpp",
+        "iosfwd": "cpp"
     }
 }

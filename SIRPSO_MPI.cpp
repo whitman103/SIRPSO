@@ -57,7 +57,8 @@ int main(int argc, char** argv){
 	//T, I, V, R
 	const int numOfSpecies(4);
 	vector<double> speciesVector={0.95,.05,1.,0.};
-	int scalingFactor(1000);
+	int scalingFactor(500);
+	transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<double>(),std::placeholders::_1,scalingFactor));
 	vector<double> resetSpecies=speciesVector;
 	//beta, delta, c, p, gamma
 	const int numOfParameters(5);
@@ -65,12 +66,12 @@ int main(int argc, char** argv){
 	vector<double> initBounds={.5,.1,.1,0.01,0.05};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(250);
+	const int numOfIterations(15);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(10);
+	const int numOfRuns(4);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -92,7 +93,9 @@ int main(int argc, char** argv){
 	map<string,int> styleMap;
 	styleMap["RungeKutta"]=0;
 	styleMap["Gillespie"]=1;
+
 	int solutionStyle(1);
+
 	SolStruct solutionStructure;
 	solutionStructure.timeIncrement=timeIncrement;
 	solutionStructure.stoppingTimes=stoppingTimes;
@@ -107,7 +110,6 @@ int main(int argc, char** argv){
 		case 0:
 		{
 			if(!exNoise){
-				transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<int>(),std::placeholders::_1,scalingFactor));
 				resetSpecies=speciesVector;
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
@@ -133,12 +135,7 @@ int main(int argc, char** argv){
 		case 1:
 		{
 			Gillespie ReactionObject1("SIRCoeffs");
-			
-			transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(multiplies<double>(),placeholders::_1,scalingFactor));
 			vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
-			for(int i=0;i<(int)intSpecies.size();i++){
-				cout<<intSpecies[i]<<endl;
-			}
 			ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpecies);
 			vector<double> resetConsts=ReactionObject1.reactConsts;
 			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
@@ -148,14 +145,6 @@ int main(int argc, char** argv){
 		return 0;
 	}
 	
-	ofstream gillespie("trueTestData.txt");
-	for(int i=0;i<(int)trueArray.size();i++){
-		for(int j=0;j<(int)trueArray[i].size();j++){
-			gillespie<<trueArray[i][j]<<" ";
-		}
-		gillespie<<endl;
-	}
-	gillespie.close();
 
 	
 
@@ -188,15 +177,14 @@ int main(int argc, char** argv){
 	MPI_Comm_rank(MPI_COMM_WORLD, &taskID);
 	MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
 	
-	
+	ofstream outFile;
+	if(taskID==0){
+		outFile.open(outputFolder+customString+"bestParticles"+".txt");
+	}
 	
 
 	for(int run=0;run<numOfRuns;run++){
 		double globalBestFitness(1e26);
-		ofstream outFile;
-		if(taskID==0){
-			outFile.open(outputFolder+customString+to_string(run)+".txt");
-		}
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
 		Particle threadParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
@@ -233,7 +221,9 @@ int main(int argc, char** argv){
 				}
 
 				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				cout<<"first fitness is: "<<threadParticle.currentFitness<<endl;
 				threadParticle.bestFitness=threadParticle.currentFitness;
+				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 					parameterPassVector[i]=threadParticle.bestSolution[i];
 				}
@@ -308,8 +298,11 @@ int main(int argc, char** argv){
 				vector<double> resetConsts=threadReaction.reactConsts;
 				tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
 
+				
+
 				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
 				threadParticle.bestFitness=threadParticle.currentFitness;
+				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 					parameterPassVector[i]=threadParticle.bestSolution[i];
 				}
@@ -355,11 +348,11 @@ int main(int argc, char** argv){
 			for(int i=0;i<numOfParameters;i++){
 				outFile<<parameterPassVector[i]<<" ";
 			}
+			outFile<<endl;
 		}
-		outFile.close();
 
 	}
-
+	outFile.close();
     
 	MPI_Finalize();
 	
