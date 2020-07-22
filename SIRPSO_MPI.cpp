@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     std::filesystem::create_directory(outputFolder);*/
 	string outputFolder="DataFolder";
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    outputFolder+="\\";
+    outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
     boost::mt19937 generator2;
     generator2.seed(generator());
