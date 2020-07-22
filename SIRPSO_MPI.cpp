@@ -61,8 +61,8 @@ int main(int argc, char** argv){
 	vector<double> resetSpecies=speciesVector;
 	//beta, delta, c, p, gamma
 	const int numOfParameters(5);
-	tuple<double,double,double,double,double> initParameters=make_tuple(0.1,0.05,0.05,0.0025,0.025);
-	vector<double> initBounds={.5,.1,.1,0.01,0.05};
+	tuple<double,double,double,double,double> initParameters=make_tuple(0.1/scalingFactor,0.05,0.05,0.0025,0.025);
+	vector<double> initBounds={.01,.1,.1,0.01,0.05};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
 	const int numOfIterations(250);
