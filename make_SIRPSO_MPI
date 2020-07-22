@@ -88,7 +88,7 @@ ZIPFILE= $(BASE).zip
 #
 
 CXX= mpic++
-CFLAGS=  -g -O0 -std=c++17
+CFLAGS=  -g -O2 -std=c++17
 CWARNS= -Wall -W -Wshadow -fno-common 
 MOREFLAGS= -Wpedantic -Wpointer-arith -Wcast-qual -Wcast-align \
            -Wwrite-strings -fshort-enums 

@@ -9,7 +9,8 @@
 #include <iomanip>
 #include <fstream>
 #include <algorithm>
-#include <filesystem>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <string>
 #include <functional>
 #include <map>
@@ -39,9 +40,11 @@ inline int randSite(int size){
 int main(int argc, char** argv){
 
     generator.seed(time(NULL));
-    string localPath=std::filesystem::current_path();
+    /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
-    std::filesystem::create_directory(outputFolder);
+    std::filesystem::create_directory(outputFolder);*/
+	string outputFolder="DataFolder";
+	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="\\";
     boost::normal_distribution<> standardNormal(0,1);
     boost::mt19937 generator2;
@@ -63,12 +66,12 @@ int main(int argc, char** argv){
 	vector<double> initBounds={.5,.1,.1,0.01,0.05};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(3);
+	const int numOfIterations(50);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(1);
+	const int numOfRuns(2);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -90,7 +93,7 @@ int main(int argc, char** argv){
 	map<string,int> styleMap;
 	styleMap["RungeKutta"]=0;
 	styleMap["Gillespie"]=1;
-	int solutionStyle(1);
+	int solutionStyle(0);
 	SolStruct solutionStructure;
 	solutionStructure.timeIncrement=timeIncrement;
 	solutionStructure.stoppingTimes=stoppingTimes;
@@ -170,8 +173,8 @@ int main(int argc, char** argv){
 	}
 	outRunge<<endl;
 	
-	/*
-	double globalBestFitness(1e26);
+	
+	
 	int sizeOfParameterVector(numOfParameters);
 	double fitnessCollection[numOfParticles];
 	double parameterPassVector[sizeOfParameterVector];
@@ -179,6 +182,7 @@ int main(int argc, char** argv){
 	
 	int nTasks(-1);
 	int taskID(-1);
+
 	
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &taskID);
@@ -188,6 +192,11 @@ int main(int argc, char** argv){
 	
 
 	for(int run=0;run<numOfRuns;run++){
+		double globalBestFitness(1e26);
+		ofstream outFile;
+		if(taskID==0){
+			outFile.open(outputFolder+customString+to_string(run)+".txt");
+		}
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
 		Particle threadParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
@@ -271,7 +280,7 @@ int main(int argc, char** argv){
 						threadParticle.bestFitness=threadParticle.currentFitness;
 					}
 					for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
-						parameterPassVector[i]=threadParticle.bestSolution[i];
+						parameterPassVector[i]=threadParticle.currentSolution[i];
 					}
 
 					MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -341,13 +350,19 @@ int main(int argc, char** argv){
 				}
 			}
 		}
+		if(taskID==0){
+			outFile<<globalBestFitness<<" ";
+			for(int i=0;i<numOfParameters;i++){
+				outFile<<parameterPassVector[i]<<" ";
+			}
+		}
+		outFile.close();
 
 	}
 
-	outRunge.close();
     
 	MPI_Finalize();
-	*/
+	
 
     return 0;
 }

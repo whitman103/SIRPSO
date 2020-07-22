@@ -162,7 +162,11 @@ Particle::~Particle(){
 }
 
 
-void Particle::dumpParticleDetails(string rootFolder, string id){
+void Particle::dumpParticleDetails(ofstream* outStream){
+	for(int i=0;i<(int)currentSolution.size();i++){
+		(*outStream)<<currentSolution[i]<<" ";
+	}
+	(*outStream)<<endl;
 }
 
 double sgn(double in){

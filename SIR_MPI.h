@@ -68,7 +68,7 @@ class Particle{
     double beta, delta, c, p, gamma;
     void unwrapParameters();
 
-    void dumpParticleDetails(string rootFolder, string id);
+    void dumpParticleDetails(ofstream* outStream);
     double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
 	vector<double> convertFromParticleToGillespie();
 	int scalingFactor;
