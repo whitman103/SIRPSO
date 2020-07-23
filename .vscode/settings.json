@@ -3,6 +3,8 @@
         "functional": "cpp",
         "xstddef": "cpp",
         "algorithm": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "vector": "cpp",
+        "tuple": "cpp"
     }
 }

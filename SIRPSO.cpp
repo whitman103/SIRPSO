@@ -10,8 +10,8 @@
 #include <fstream>
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <string>
-#include <map>
 	using namespace std;
 #include <boost/random/mersenne_twister.hpp>
 	boost::mt19937 generator;
@@ -30,9 +30,11 @@ inline int randSite(int size){
 }
 
 
-#include "SIR.h"
+#include "SIR_MPI.h"
+#include "GillespieFunctions.h"
 
-
+void sendVectorToArray(vector<double> inVec, double* inArray);
+void sendArrayToVector(vector<double>& inVec, double* inArray);
 
 int main(){
 
@@ -53,14 +55,20 @@ int main(){
         //T, I, V, R
         const int numOfSpecies(4);
         vector<double> speciesVector={0.95,.05,1.,0.};
+    	int scalingFactor(500);
+    	transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<double>(),std::placeholders::_1,scalingFactor));
+        vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
         vector<double> resetSpecies=speciesVector;
+        vector<int> intSpeciesReset=intSpecies;
         //beta, delta, c, p, gamma
         const int numOfParameters(5);
-        tuple<double,double,double,double,double> initParameters=make_tuple(0.05,0.05,0.0005,0.02,0.05);
-        vector<double> initBounds={1,.5,.5,0.5,0.5};
-        const int numOfParticles(20);
+        tuple<double,double,double,double,double> initParameters=make_tuple(0.1,0.05,0.05,0.0025,0.025);
+	    vector<double> initBounds={.5,.1,.1,0.01,0.05};
+        const int numOfParticles(5);
         //Number of PSO iterations
-        const int numOfIterations(100);
+        const int numOfIterations(25);
+
+        const int numOfSamples(100);
 
         //Number of Particle sets to run
         const int numOfRuns(40);
@@ -85,19 +93,20 @@ int main(){
         map<string,int> styleMap;
         styleMap["RungeKutta"]=0;
         styleMap["Gillespie"]=1;
-        int solutionStyle(0);
+        int solutionStyle(1);
         SolStruct solutionStructure;
         solutionStructure.timeIncrement=timeIncrement;
         solutionStructure.stoppingTimes=stoppingTimes;
 
-        Particle trueParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters);
+        Particle trueParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
 
         
         vector<vector<double> > trueArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
+        vector<vector<double> > trueVar=trueArray;
         
         switch(solutionStyle){
             case 0:
-            {
+            {/*
                 if(noise==0){
                     trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
                 }
@@ -120,7 +129,16 @@ int main(){
                             }
                         }
                     }
-                }
+                }*/
+            }
+            break;
+            case 1:
+            {
+                Gillespie ReactionObject1("SIRCoeffs");
+                intSpecies=intSpeciesReset;
+                ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
+                vector<double> resetConsts=ReactionObject1.reactConsts;
+                tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
             }
             break;
             default:
@@ -130,9 +148,12 @@ int main(){
         
 
 
-
         double inDelta(10);
         vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
+
+        Gillespie threadReaction("SIRCoeffs");
+        intSpecies=intSpeciesReset;
+        threadReaction.initializeData("SIRConsts",threadReaction.reactConsts,intSpecies);
 
         ofstream outRunge;
         switch(noise){
@@ -150,23 +171,37 @@ int main(){
         }
         outRunge<<endl;
 
+        for(int i=0;i<(int)trueArray.size();i++){
+            for(int j=0;j<(int)trueArray[i].size();j++){
+                outRunge<<trueArray[i][j]<<" ";
+            }
+            outRunge<<endl;
+        }
+        outRunge<<"Above is True data"<<endl;
+
+        ofstream monitorFile("fitnessMonitor.txt");
+
+        vector<vector<double> > outArray;
+
         for(int run=0;run<numOfRuns;run++){
 
 
-            vector<Particle> particleList(numOfParticles,Particle(numOfParameters,initBounds,interactionFuncts,initParameters));
+            vector<Particle> particleList(numOfParticles,Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor));
             for(int i=0;i<(int)particleList.size();i++){
                 vector<double> interParams(numOfParameters);
                 for(int param=0;param<(int)interParams.size();param++){
-                    particleList[i].currentSolution[param]=randPull()*initBounds[param];
+                    //particleList[i].currentSolution[param]=randPull()*initBounds[param];
                 }
             }
             
-            int bestParticle(0);
+            
             vector<double> globalBestSolutions(numOfParameters,0);
+            double parameterArray[numOfParameters];
 
             switch(solutionStyle){
                 case 0:
                 {
+                    int bestParticle(0);
                     //Initialize
                     vector<double> fitnessHolder(numOfParticles,0);
 
@@ -183,10 +218,12 @@ int main(){
 
                     bestParticle=min_element(fitnessHolder.begin(),fitnessHolder.end())-fitnessHolder.begin();
                     globalBestSolutions=particleList[bestParticle].currentSolution;
+                    sendVectorToArray(globalBestSolutions,parameterArray);
                     
                     for(int particle=0;particle<(int)particleList.size();particle++){
-                        particleList[particle].performUpdate(&generator,globalBestSolutions,&FuzzyStructure[particle]);
+                        particleList[particle].performUpdate(&generator,parameterArray,&FuzzyStructure[particle]);
                     }
+                    sendArrayToVector(globalBestSolutions,parameterArray);
 
                     //Iterate
                     for(int iteration=0;iteration<numOfIterations;iteration++){
@@ -205,13 +242,84 @@ int main(){
                         }
 
                         bestParticle=min_element(fitnessHolder.begin(),fitnessHolder.end())-fitnessHolder.begin();
-                        globalBestSolutions=particleList[bestParticle].currentSolution;
-
+                        sendVectorToArray(globalBestSolutions,parameterArray);
+                    
                         for(int particle=0;particle<(int)particleList.size();particle++){
-                            particleList[particle].performUpdate(&generator,globalBestSolutions,&FuzzyStructure[particle]);
+                            particleList[particle].performUpdate(&generator,parameterArray,&FuzzyStructure[particle]);
                         }
+                        sendArrayToVector(globalBestSolutions,parameterArray);
+                    }
+                }
+                break;
+                case 1:
+                {
+                    vector<vector<double> > testArray;
+                    vector<vector<double> > testVar;
+                    vector<double> fitnessHolder(numOfParticles,0);
+                    
+
+                    int bestParticle(0);
+
+                    for(int particle=0;particle<(int)particleList.size();particle++){
+                        Particle* threadParticle=&particleList[particle];
+
+                        intSpecies=intSpeciesReset;
+                        tie(testArray,testVar)=generateGillespieData(threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+
+                        
+
+                        (*threadParticle).currentFitness=fitnessFunction(trueArray,testArray);
+                        (*threadParticle).bestFitness=(*threadParticle).currentFitness;
+                        (*threadParticle).bestSolution=(*threadParticle).currentSolution;
+                        fitnessHolder[particle]=(*threadParticle).currentFitness;
                     }
                     
+                    bestParticle=min_element(fitnessHolder.begin(),fitnessHolder.end())-fitnessHolder.begin();
+                    
+                    globalBestSolutions=particleList[bestParticle].currentSolution;
+                    sendVectorToArray(globalBestSolutions,parameterArray);
+                    
+                    for(int particle=0;particle<(int)particleList.size();particle++){
+                        particleList[particle].performUpdate(&generator,parameterArray,&FuzzyStructure[particle]);
+                    }
+                    sendArrayToVector(globalBestSolutions,parameterArray);
+                    
+
+                    for(int iteration=0;iteration<numOfIterations;iteration++){
+                        for(int particle=0;particle<(int)particleList.size();particle++){
+                            Particle* threadParticle=&particleList[particle];
+
+                            intSpecies=intSpeciesReset;
+                            tie(testArray,testVar)=generateGillespieData(threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+
+                            
+
+                            (*threadParticle).currentFitness=fitnessFunction(trueArray,testArray);
+                            fitnessHolder[particle]=(*threadParticle).currentFitness;
+                            if(((*threadParticle).currentFitness<(*threadParticle).bestFitness)){
+                                (*threadParticle).bestSolution=(*threadParticle).currentSolution;
+                                (*threadParticle).bestFitness=(*threadParticle).currentFitness;
+                            }
+                            fitnessHolder[particle]=(*threadParticle).currentFitness;
+                        }
+
+                        bestParticle=min_element(fitnessHolder.begin(),fitnessHolder.end())-fitnessHolder.begin();
+                        sendVectorToArray(globalBestSolutions,parameterArray);
+                        
+                    
+                        for(int particle=0;particle<(int)particleList.size();particle++){
+                            particleList[particle].performUpdate(&generator,parameterArray,&FuzzyStructure[particle]);
+                        }
+                        sendArrayToVector(globalBestSolutions,parameterArray);
+
+                        
+                        
+                        for(int i=0;i<numOfParticles;i++){
+                            monitorFile<<fitnessHolder[i]<<" ";
+                        }
+                        monitorFile<<endl;
+                        
+                    }
                 }
                 break;
             }
@@ -220,6 +328,21 @@ int main(){
                 outRunge<<globalBestSolutions[i]<<" ";
             }
             outRunge<<endl;
+            Particle outParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
+            outParticle.currentSolution=globalBestSolutions;
+            intSpecies=intSpeciesReset;
+            vector<vector<double> > testArray;
+            vector<vector<double> > testVar;
+            tie(testArray,testVar)=generateGillespieData(&outParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+
+            for(int i=0;i<(int)testArray.size();i++){
+                for(int j=0;j<(int)testArray[i].size();j++){
+                    outRunge<<testArray[i][j]<<" ";
+                }
+                outRunge<<endl;
+            }
+            outRunge<<endl;
+            
         }
 
         outRunge.close();
@@ -229,6 +352,17 @@ int main(){
     return 0;
 }
 
+void sendVectorToArray(vector<double> inVec, double* inArray){
+    for(int i=0;i<(int)inVec.size();i++){
+        inArray[i]=inVec[i];
+    }
+}
+
+void sendArrayToVector(vector<double>& inVec, double* inArray){
+    for(int i=0;i<(int)inVec.size();i++){
+        inVec[i]=inArray[i];
+    }
+}
 
 
 

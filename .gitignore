@@ -2,3 +2,10 @@ SIRPSO_MPI.exe
 DataFolder/NoDynamicsLater_bestParticles.txt
 DataFolder/NoDynamicsLater_bestParticles.txt
 DataFolder
+fitnessMonitor.txt
+GillespieFunctions.o
+*.o
+*.exe
+*.exe
+SIR_MPI.o
+*.o

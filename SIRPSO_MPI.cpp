@@ -59,7 +59,9 @@ int main(int argc, char** argv){
 	vector<double> speciesVector={0.95,.05,1.,0.};
 	int scalingFactor(500);
 	transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<double>(),std::placeholders::_1,scalingFactor));
+	vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
 	vector<double> resetSpecies=speciesVector;
+	vector<int> intSpeciesReset=intSpecies;
 	//beta, delta, c, p, gamma
 	const int numOfParameters(5);
 	tuple<double,double,double,double,double> initParameters=make_tuple(0.1,0.05,0.05,0.0025,0.025);
@@ -68,10 +70,10 @@ int main(int argc, char** argv){
 	//Number of PSO iterations
 	const int numOfIterations(100);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(2500);
+	const int numOfSamples(500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(5);
+	const int numOfRuns(25);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -134,9 +136,9 @@ int main(int argc, char** argv){
 		break;
 		case 1:
 		{
+			intSpecies=intSpeciesReset;
 			Gillespie ReactionObject1("SIRCoeffs");
-			vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
-			ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpecies);
+			ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
 			vector<double> resetConsts=ReactionObject1.reactConsts;
 			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
 		}
@@ -146,7 +148,6 @@ int main(int argc, char** argv){
 	}
 	
 
-	
 
 	double inDelta(10);
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
@@ -172,7 +173,9 @@ int main(int argc, char** argv){
 	int nTasks(-1);
 	int taskID(-1);
 
-	
+	Gillespie threadReaction("SIRCoeffs");
+	threadReaction.initializeData("SIRConsts",threadReaction.reactConsts,intSpeciesReset);
+
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &taskID);
 	MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
@@ -190,7 +193,7 @@ int main(int argc, char** argv){
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
 		Particle threadParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
-
+		generator.seed(taskID);
 		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 			threadParticle.currentSolution[i]=randPull()*initBounds[i];
 		}
@@ -297,10 +300,8 @@ int main(int argc, char** argv){
 			{
 				vector<vector<double> > testArray;
 				vector<vector<double> > testVar;
-				Gillespie threadReaction("SIRCoeffs");
 			
-				vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
-				threadReaction.initializeData("SIRConsts",threadReaction.reactConsts,intSpecies);
+				intSpecies=intSpeciesReset;
 				vector<double> resetConsts=threadReaction.reactConsts;
 				tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
 
@@ -324,7 +325,9 @@ int main(int argc, char** argv){
 				
 				threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
 
+				//iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
+					intSpecies=intSpeciesReset;
 					tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
 
 					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
