@@ -10,3 +10,4 @@ GillespieFunctions.o
 SIR_MPI.o
 *.o
 *.o
+*.stackdump
