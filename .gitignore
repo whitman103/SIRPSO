@@ -9,3 +9,4 @@ GillespieFunctions.o
 *.exe
 SIR_MPI.o
 *.o
+*.o

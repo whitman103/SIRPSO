@@ -7,6 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <functional>
+#include <boost/random/mersenne_twister.hpp>
 using namespace std;
 
 
@@ -402,13 +403,58 @@ void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHol
 	globalFitness=bestFitness;
 }
 	
-	
-	
 vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
 	vector<vector<vector<double> > > outData(reportTimes.size()-1,vector<vector<double> > (specNum.size(), vector<double> (numOfRuns,0)));
 	(*inReactionObject).reactConsts=(*inParticle).convertFromParticleToGillespie();
 	for(int run=0;run<numOfRuns;run++){
 		specNum=(*inReactionObject).resetSpecies;
+		double currentTime(0);
+		int reportIndex(0);
+		do{
+			tuple<int,double> hold=(*inReactionObject).PerformTimeStep2(specNum);
+			currentTime+=get<1>(hold);
+			
+			
+			if(get<1>(hold)<0){
+				for(int index=reportIndex;index<(int)reportTimes.size();index++){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[index][i][run]=specNum[i];
+					}
+				}
+				reportIndex=(int)reportTimes.size();
+			}
+			else{
+				(*inReactionObject).specChange(specNum,get<0>(hold),(*inReactionObject).changeCoeffs);
+				if(currentTime>reportTimes[reportIndex+1]){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[reportIndex][i][run]=specNum[i];
+					}
+					reportIndex++;
+				}
+			}
+		}while(reportIndex<(int)reportTimes.size()-1);
+	}
+	
+	return outData;
+}
+	
+vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator){
+	vector<vector<vector<double> > > outData(reportTimes.size()-1,vector<vector<double> > (specNum.size(), vector<double> (numOfRuns,0)));
+	(*inReactionObject).reactConsts=(*inParticle).convertFromParticleToGillespie();
+	for(int run=0;run<numOfRuns;run++){
+		specNum=(*inReactionObject).resetSpecies;
+		int totalCells(specNum[0]+specNum[1]);
+		vector<double> doubleSpecies(specNum.begin(),specNum.end());
+		doubleSpecies[1]=doubleSpecies[1]*(1.+.2*(2*(double)(*inGenerator)()/(double)(*inGenerator).max()-1.))+1;
+		doubleSpecies[0]=totalCells-doubleSpecies[1];
+		doubleSpecies[2]=doubleSpecies[2]*(1.+.3*(2*(double)(*inGenerator)()/(double)(*inGenerator).max()-1.));
+		vector<int> backToInt(doubleSpecies.begin(),doubleSpecies.end());
+		cout<<run<<" ";
+		for(int i=0;i<(int)backToInt.size();i++){
+			cout<<backToInt[i]<<" ";
+		}
+		cout<<endl;
+		specNum=backToInt;
 		double currentTime(0);
 		int reportIndex(0);
 		do{
@@ -462,10 +508,14 @@ tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(ve
 	return make_tuple(outMeans, outVar);
 }
 
-
-
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
 	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle,inReactionObject,reportTimes,specNum,numOfRuns);
+	
+	return calculateMeansAndVar(inData);
+}
+
+tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator){
+	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle,inReactionObject,reportTimes,specNum,numOfRuns,inGenerator);
 	
 	return calculateMeansAndVar(inData);
 }

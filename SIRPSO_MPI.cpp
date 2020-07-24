@@ -31,6 +31,7 @@ inline int randSite(int size){
 	return generator()%size;
 }
 
+
 #include "GillespieFunctions.h"
 #include "SIR_MPI.h"
 
@@ -49,11 +50,13 @@ int main(int argc, char** argv){
     boost::mt19937 generator2;
     generator2.seed(generator());
     boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
+	boost::mt19937 exGenerator;
+	exGenerator.seed(generator2());
 
     string customString("NoDynamicsLater_");
     
 
-    bool exNoise(false);
+    bool exNoise(true);
 	//T, I, V, R
 	const int numOfSpecies(4);
 	vector<double> speciesVector={0.95,.05,1.,0.};
@@ -136,11 +139,18 @@ int main(int argc, char** argv){
 		break;
 		case 1:
 		{
-			intSpecies=intSpeciesReset;
-			Gillespie ReactionObject1("SIRCoeffs");
-			ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
-			vector<double> resetConsts=ReactionObject1.reactConsts;
-			tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
+			if(!exNoise){
+				intSpecies=intSpeciesReset;
+				Gillespie ReactionObject1("SIRCoeffs");
+				ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
+				tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
+			}
+			else{
+				intSpecies=intSpeciesReset;
+				Gillespie ReactionObject1("SIRCoeffs");
+				ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
+				tie(trueArray,trueVar)=generateGillespieData(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples, &exGenerator);
+			}
 		}
 		break;
 		default:
@@ -302,8 +312,14 @@ int main(int argc, char** argv){
 				vector<vector<double> > testVar;
 			
 				intSpecies=intSpeciesReset;
-				vector<double> resetConsts=threadReaction.reactConsts;
-				tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+				if(!exNoise){
+					intSpecies=intSpeciesReset;
+					tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+				}
+				else{
+					intSpecies=intSpeciesReset;
+					tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples, &exGenerator);
+				}
 
 				
 
@@ -328,7 +344,14 @@ int main(int argc, char** argv){
 				//iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
 					intSpecies=intSpeciesReset;
-					tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+					if(!exNoise){
+						intSpecies=intSpeciesReset;
+						tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+					}
+					else{
+						intSpecies=intSpeciesReset;
+						tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples, &exGenerator);
+					}
 
 					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
