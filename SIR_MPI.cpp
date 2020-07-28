@@ -520,12 +520,12 @@ tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(P
 	return calculateMeansAndVar(inData);
 }
 
-vector<int> readVectorFile(string inString){
-	ifstream inString(inString);
+vector<double> readVectorFile(string inString){
+	ifstream inFile(inString);
 	int inHold;
 	inFile>>inHold;
 	int size(inHold);
-	vector<int> inVec(size,0);
+	vector<double> inVec(size,0);
 	for(int i=0;i<size;i++){
 		inFile>>inVec[i];
 		cout<<inVec[i]<<" ";

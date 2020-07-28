@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_"+to_string(argv[3]);
+	string outputFolder="DataFolder_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
@@ -92,7 +92,8 @@ int main(int argc, char** argv){
 	interactionFuncts[2]=thirdInteraction;
 	interactionFuncts[3]=fourthInteraction;
 
-	vector<double> stoppingTimes=readVectorFile(argv[2]);
+	string argString(argv[2]);
+	vector<double> stoppingTimes=readVectorFile(argString+".txt");
 	double timeIncrement(0.002);
 
 	map<string,int> styleMap;
