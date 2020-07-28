@@ -92,7 +92,7 @@ int main(int argc, char** argv){
 	interactionFuncts[2]=thirdInteraction;
 	interactionFuncts[3]=fourthInteraction;
 
-	vector<double> stoppingTimes={0,10,20,40,60,80};
+	vector<double> stoppingTimes=readVectorFile(argv[2]);
 	double timeIncrement(0.002);
 
 	map<string,int> styleMap;
