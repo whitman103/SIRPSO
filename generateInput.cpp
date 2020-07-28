@@ -20,8 +20,8 @@ int main(){
 	ofstream scriptOutWrite("runScript.sh");
 	scriptOutWrite<<"#!/bin/sh"<<endl;
 	scriptOutWrite<<"#SBATCH -N 3"<<endl;
-	scriptOutWrite<<"#SBATCH --ntasks=60"
-	scriptOutWrite<<"#SBATCH --cpus-per-task=20
+	scriptOutWrite<<"#SBATCH --ntasks=60";
+	scriptOutWrite<<"#SBATCH --cpus-per-task=20";
 	scriptOutWrite<<("g++ -O2 takeInput.cpp -o takeInput.exe")<<endl;
 	
 	int numOfThreads(20);
