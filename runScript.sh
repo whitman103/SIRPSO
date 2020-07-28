@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --ntasks=60
+#SBATCH --ntasks=3
 #SBATCH --nodes=3
 
 mpirun -np 20 ./SIRPSO_MPI.exe "20" "InputFolder//outputOne.txt" "0" &
