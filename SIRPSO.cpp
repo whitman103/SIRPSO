@@ -66,9 +66,9 @@ int main(){
 	    vector<double> initBounds={.5,.1,.1,0.01,0.05};
         const int numOfParticles(5);
         //Number of PSO iterations
-        const int numOfIterations(100);
+        const int numOfIterations(25);
 
-        const int numOfSamples(500);
+        const int numOfSamples(100);
 
         //Number of Particle sets to run
         const int numOfRuns(40);
