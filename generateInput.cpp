@@ -20,7 +20,9 @@ int main(){
 	ofstream scriptOutWrite("runScript.sh");
 	scriptOutWrite<<("g++ -O2 takeInput.cpp -o takeInput.exe")<<endl;
 	
-	string baseString("mpirun -np 20 ./SIRPSO_MPI.exe \"20\" \"");
+	int numOfThreads(20);
+	
+	string baseString("mpirun -np "+to_string(numOfThreads)+" ./SIRPSO_MPI.exe \""+to_string(numOfThreads)+"\" \"");
 	
 	vector<int> times={0,10,20,40};
 	generateOutputFolder(times, outputFolder+"outputOne.txt");
