@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_"+string(argv[3]);
+	string outputFolder="DataFolder_ODENoise"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
@@ -195,7 +195,6 @@ int main(int argc, char** argv){
 	ofstream monitorFile;
 	if(taskID==0){
 		outFile.open(outputFolder+customString+"bestParticles"+".txt");
-		monitorFile.open(outputFolder+"fitnessTests.txt");
 	}
 	
 
@@ -367,10 +366,6 @@ int main(int argc, char** argv){
 					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					if(taskID==0){
 						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
-						for(int i=0;i<numOfParticles;i++){
-							monitorFile<<fitnessCollection[i]<<" ";
-						}
-						monitorFile<<endl;
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					

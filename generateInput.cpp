@@ -20,9 +20,8 @@ int main(){
 	ofstream scriptOutWrite("runScript.sh");
 	scriptOutWrite<<"#!/bin/sh"<<endl;
 	scriptOutWrite<<"#SBATCH -N 3"<<endl;
-	scriptOutWrite<<"#SBATCH --ntasks=60";
-	scriptOutWrite<<"#SBATCH --cpus-per-task=20";
-	scriptOutWrite<<("g++ -O2 takeInput.cpp -o takeInput.exe")<<endl;
+	scriptOutWrite<<"#SBATCH --ntasks=60"<<endl;
+	scriptOutWrite<<"#SBATCH --cpus-per-task=1"<<endl;
 	
 	int numOfThreads(20);
 	
@@ -31,16 +30,16 @@ int main(){
 	vector<int> times={0,10,20,40};
 	int runCounter(0);
 	generateOutputFolder(times, outputFolder+"outputOne.txt");
-	scriptOutWrite<<(baseString+outputFolder+"outputOne\" \""+to_string(runCounter)+"\"")<<endl;
+	scriptOutWrite<<(baseString+outputFolder+"outputOne\" \""+to_string(runCounter)+"\" &")<<endl;
 	runCounter++;
 	vector<int> times2={0,20,40,80};
 	generateOutputFolder(times2,outputFolder+"outputTwo.txt");
-	scriptOutWrite<<(baseString+outputFolder+"outputTwo\""+to_string(runCounter)+"\"")<<endl;
+	scriptOutWrite<<(baseString+outputFolder+"outputTwo\" \""+to_string(runCounter)+"\" &")<<endl;
 	runCounter++;
 	vector<int> times3={0,10,20,40,60,80};
 	generateOutputFolder(times3,outputFolder+"outputThree.txt");
-	scriptOutWrite<<(baseString+outputFolder+"outputThree\""+to_string(runCounter)+"\"")<<endl;
-	
+	scriptOutWrite<<(baseString+outputFolder+"outputThree\" \""+to_string(runCounter)+"\" &")<<endl;
+	scriptOutWrite<<"wait"<<endl;
 	
 	
 	scriptOutWrite.close();
