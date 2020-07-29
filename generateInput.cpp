@@ -27,12 +27,12 @@ int main(){
 	
 	string baseString("mpirun -np "+to_string(numOfThreads)+" ./SIRPSO_MPI.exe \""+to_string(numOfThreads)+"\" \"");
 	
-	vector<int> times={0,10,20,40};
+	vector<int> times={0,10,20};
 	int runCounter(0);
 	generateOutputFolder(times, outputFolder+"outputOne.txt");
 	scriptOutWrite<<(baseString+outputFolder+"outputOne\" \""+to_string(runCounter)+"\" &")<<endl;
 	runCounter++;
-	vector<int> times2={0,20,40,80};
+	vector<int> times2={0,40,80};
 	generateOutputFolder(times2,outputFolder+"outputTwo.txt");
 	scriptOutWrite<<(baseString+outputFolder+"outputTwo\" \""+to_string(runCounter)+"\" &")<<endl;
 	runCounter++;
