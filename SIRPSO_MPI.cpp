@@ -323,7 +323,7 @@ int main(int argc, char** argv){
 
 				
 
-				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				threadParticle.currentFitness=fitnessFunction(trueArray,testArray,testVar,trueVar);
 				threadParticle.bestFitness=threadParticle.currentFitness;
 				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
@@ -353,7 +353,7 @@ int main(int argc, char** argv){
 						tie(testArray,testVar)=generateGillespieData(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples, &exGenerator);
 					}
 
-					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+					threadParticle.currentFitness=fitnessFunction(trueArray,testArray,trueVar,testVar);
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
 						threadParticle.bestFitness=threadParticle.currentFitness;
