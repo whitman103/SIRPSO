@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_ODENoise"+string(argv[3]);
+	string outputFolder="DataFolder_GillespieNoise_Var"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
