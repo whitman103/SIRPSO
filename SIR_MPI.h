@@ -92,7 +92,7 @@ void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, dou
 
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean);
 
-double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> > testVar);
+double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> >& testVar);
 
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix);
 
