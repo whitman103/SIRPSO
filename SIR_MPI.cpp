@@ -175,7 +175,6 @@ double sgn(double in){
 }
 
 
-
 double Particle::performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct){
     for(int i=0;i<(int)currentSolution.size();i++){
         double proposedUpdate(0);
@@ -449,11 +448,6 @@ vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle
 		doubleSpecies[0]=totalCells-doubleSpecies[1];
 		doubleSpecies[2]=doubleSpecies[2]*(1.+.3*(2*(double)(*inGenerator)()/(double)(*inGenerator).max()-1.));
 		vector<int> backToInt(doubleSpecies.begin(),doubleSpecies.end());
-		cout<<run<<" ";
-		for(int i=0;i<(int)backToInt.size();i++){
-			cout<<backToInt[i]<<" ";
-		}
-		cout<<endl;
 		specNum=backToInt;
 		double currentTime(0);
 		int reportIndex(0);
@@ -520,6 +514,29 @@ tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(P
 	return calculateMeansAndVar(inData);
 }
 
+void generateDistributions(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator, string outFile){
+	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle, inReactionObject, reportTimes, specNum, numOfRuns, inGenerator);
+	ofstream outStream(outFile);
+	for(int i=0;i<(int)reportTimes.size();i++){
+		outStream<<reportTimes[i];
+		for(int j=0;j<specNum.size()-1;j++){
+			outStream<<",";
+		}
+	}
+	outStream<<endl;
+	
+	for(int i=0;i<numOfRuns;i++){
+		for(int j=0;j<(int)specNum.size();j++){
+			for(int k=0;k<(int)reportTimes.size()-1;k++){
+				cout<<i<<" "<<inData[k][j].size()<<" "<<j<<" "<<inData[i].size()<<" "<<k<<" "<<inData.size()<<endl;
+				outStream<<inData[k][j][i]<<",";
+			}
+		}
+		outStream<<endl;
+	}
+	outStream.close();
+}
+
 vector<double> readVectorFile(string inString){
 	ifstream inFile(inString);
 	int inHold;
@@ -532,4 +549,16 @@ vector<double> readVectorFile(string inString){
 	}
 	inFile.close();
 	return inVec;
+}
+
+tuple<double,double,double,double,double> readParameterData(string inFile){
+	tuple<double,double,double,double,double> parameterSet;
+	ifstream inData(inFile);
+	inData>>get<0>(parameterSet);
+	inData>>get<1>(parameterSet);
+	inData>>get<2>(parameterSet);
+	inData>>get<3>(parameterSet);
+	inData>>get<4>(parameterSet);
+	
+	return parameterSet;
 }

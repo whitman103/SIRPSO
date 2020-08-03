@@ -120,6 +120,10 @@ tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(P
 
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator);
 
+void generateDistributions(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator, string outFile);
+
+tuple<double,double,double,double,double> readParameterData(string inFile);
+
 vector<double> readVectorFile(string inString);
 
 #endif

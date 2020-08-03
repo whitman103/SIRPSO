@@ -1,0 +1,1 @@
+g++ -O2 -std=c++17 generateDistributions.cpp GillespieFunctions.cpp SIR_MPI.cpp -o generateDistributions.exe
