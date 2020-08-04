@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <tuple>
+#include <functional>
 	using namespace std;
 #include <boost/random/mersenne_twister.hpp>
 	boost::mt19937 generator;
@@ -12,6 +15,9 @@
 int main(){
 	
 	generator.seed(time(NULL));
+
+	string baseFolder="D:\\Downloads\\HoldingFolder\\DataFolder_ODENoise2\\";
+	string inParams="outTrueParameters.txt";
     
     boost::normal_distribution<> standardNormal(0,1);
     boost::mt19937 generator2;
@@ -19,8 +25,6 @@ int main(){
     boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
 	boost::mt19937 exGenerator;
 	exGenerator.seed(generator2());
-
-    string customString("NoDynamicsLater_");
     
 
     bool exNoise(true);
@@ -34,8 +38,8 @@ int main(){
 	vector<int> intSpeciesReset=intSpecies;
 	//beta, delta, c, p, gamma
 	const int numOfParameters(5);
-	string inParams="paramTests.txt";
-	tuple<double,double,double,double,double> initParameters=readParameterData(inParams);
+	
+	tuple<double,double,double,double,double> initParameters=readParameterData(baseFolder+inParams);
 	vector<double> initBounds={.5,.1,.1,0.01,0.05};
 	//Number of PSO iterations
 	const int numOfIterations(100);
@@ -88,7 +92,12 @@ int main(){
 	Gillespie ReactionObject1("SIRCoeffs");
 	ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
 	
-	generateDistributions(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples, &exGenerator, "test.txt");
+	generateDistributions(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples, &exGenerator,baseFolder+"trueDists.txt");
+
+	initParameters=readParameterData(baseFolder+"outFoundParameters.txt");
+	Particle testParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
+
+	generateDistributions(&testParticle,&ReactionObject1,stoppingTimes,intSpecies,numOfSamples,&exGenerator,baseFolder+"testDists.txt");
 	
 	return 0;
 }

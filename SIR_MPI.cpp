@@ -518,18 +518,17 @@ void generateDistributions(Particle* inParticle, Gillespie* inReactionObject, ve
 	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle, inReactionObject, reportTimes, specNum, numOfRuns, inGenerator);
 	ofstream outStream(outFile);
 	for(int i=0;i<(int)reportTimes.size();i++){
-		outStream<<reportTimes[i];
+		outStream<<reportTimes[i]<<",";
 		for(int j=0;j<specNum.size()-1;j++){
-			outStream<<",";
+			outStream<<reportTimes[i]<<",";
 		}
 	}
 	outStream<<endl;
 	
 	for(int i=0;i<numOfRuns;i++){
-		for(int j=0;j<(int)specNum.size();j++){
-			for(int k=0;k<(int)reportTimes.size()-1;k++){
-				cout<<i<<" "<<inData[k][j].size()<<" "<<j<<" "<<inData[i].size()<<" "<<k<<" "<<inData.size()<<endl;
-				outStream<<inData[k][j][i]<<",";
+		for(int j=0;j<(int)reportTimes.size()-1;j++){
+			for(int k=0;k<(int)specNum.size();k++){
+				outStream<<inData[j][k][i]<<",";
 			}
 		}
 		outStream<<endl;
