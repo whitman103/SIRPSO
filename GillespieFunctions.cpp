@@ -69,11 +69,12 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
   int N;
   myfile >> N;
   int inthold;
- /* for (int i = 0; i < N; i++)
+  resetSpecies=specNum;
+ for (int i = 0; i < N; i++)
     {
       myfile >> inthold;
       specNum.push_back (inthold);
-    }*/
+    }
   int M;
   myfile >> M;
   double doublehold;
@@ -83,7 +84,7 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
       reactConsts.push_back (doublehold);
     }
   myfile.close ();
-  resetSpecies=specNum;
+  
 }
 
 double Gillespie::partial_sum(vector<double> v, int index){

@@ -156,12 +156,21 @@ Particle::Particle(int numOfParameters, vector<double> initBounds, vector<double
 	gamma=get<4>(initParameters);
 	currentSolution[4]=gamma;
 	scalingFactor=scalingSize;
+}
 
+Particle::Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize){
+	currentSolution.resize(numOfParameters);
+    bestSolution.resize(numOfParameters);
+    currentVelocity.resize(numOfParameters);
+    interactionFunctions=initFunctions;
+    bestFitness=0;
+    currentFitness=0;
+	currentSolution=Parameters;
+	scalingFactor=scalingSize;
 }
 
 Particle::~Particle(){
 }
-
 
 void Particle::dumpParticleDetails(ofstream* outStream){
 	for(int i=0;i<(int)currentSolution.size();i++){
@@ -211,6 +220,16 @@ void Particle::unwrapParameters(){
 	gamma=currentSolution[4];
 }
 
+void Particle::unwrap_pVavParameters(){
+	k0=currentSolution[0];
+	k1=currentSolution[1];
+	k2=currentSolution[2];
+	k3=currentSolution[3];
+	k4=currentSolution[4];
+	k5=currentSolution[5];
+}
+	
+	
 //Species are currently T, I, V, R
 
 double firstInteraction(Particle* currentParticle, vector<double>& species){
@@ -561,3 +580,4 @@ tuple<double,double,double,double,double> readParameterData(string inFile){
 	
 	return parameterSet;
 }
+

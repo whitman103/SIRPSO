@@ -7,6 +7,7 @@
 #include <vector>
 #include <boost/random/mersenne_twister.hpp>
 #include "GillespieFunctions.h"
+
 using boost::mt19937;
 
 
@@ -57,6 +58,7 @@ class FuzzyTree{
 class Particle{
     public:
     Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
+	Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
 	~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
@@ -66,6 +68,7 @@ class Particle{
     double bestFitness;
     double currentFitness;
     double beta, delta, c, p, gamma;
+	double k0, k1, k2, k3, k4, k5;
     void unwrapParameters();
 
     void dumpParticleDetails(ofstream* outStream);
@@ -74,6 +77,7 @@ class Particle{
 	int scalingFactor;
 	void divideBeta();
 	void multiplyBeta();
+	void unwrap_pVavParameters();
 
     private:
 };
