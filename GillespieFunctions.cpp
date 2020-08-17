@@ -24,6 +24,13 @@ Gillespie::~Gillespie(){
 	propCoeffs.clear();
 }
 
+void Gillespie::printProp(){
+	for(int i=0;i<(int)propVector.size();i++){
+		cout<<propVector[i]<<" ";
+	}
+	cout<<endl;
+}
+
 tuple<int,double> Gillespie::PerformTimeStep(vector<int>& specNum){
 	tuple<int,double> output={0,0};
 	double r1=(double) generator()/(double)generator.max();
@@ -69,11 +76,12 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
   int N;
   myfile >> N;
   int inthold;
- /* for (int i = 0; i < N; i++)
+  resetSpecies=specNum;
+  for (int i = 0; i < N; i++)
     {
       myfile >> inthold;
       specNum.push_back (inthold);
-    }*/
+    }
   int M;
   myfile >> M;
   double doublehold;
@@ -83,7 +91,7 @@ void Gillespie::initializeData (string consts, vector < double >&reactConsts,vec
       reactConsts.push_back (doublehold);
     }
   myfile.close ();
-  resetSpecies=specNum;
+  
 }
 
 double Gillespie::partial_sum(vector<double> v, int index){
@@ -101,7 +109,7 @@ double Gillespie::sumupslow(vector<int> specNum, vector<double> reactConsts,vect
 			double totalCombos(1);
 			for(int j=0;j<(int) propCoeffs[i].size();j++){
 				if(propCoeffs[i][j]==1){
-				totalCombos*=specNum[j];
+					totalCombos*=specNum[j];
 				}
 				else{
 					if(propCoeffs[i][j]==2){

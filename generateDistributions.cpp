@@ -11,6 +11,7 @@
 
 #include "GillespieFunctions.h"
 #include "SIR_MPI.h"
+#include "Development.h"
 
 int main(){
 	
@@ -44,7 +45,7 @@ int main(){
 	//Number of PSO iterations
 	const int numOfIterations(100);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(500);
+	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
 	const int numOfRuns(25);
@@ -92,12 +93,12 @@ int main(){
 	Gillespie ReactionObject1("SIRCoeffs");
 	ReactionObject1.initializeData("SIRConsts",ReactionObject1.reactConsts,intSpeciesReset);
 	
-	generateDistributions(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples, &exGenerator,baseFolder+"trueDists.txt");
+	vector<vector<vector<double> > > trueData=generateDistributions(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples, &exGenerator,baseFolder+"trueDists.txt");
 
 	initParameters=readParameterData(baseFolder+"outFoundParameters.txt");
 	Particle testParticle=Particle(numOfParameters,initBounds,interactionFuncts,initParameters,scalingFactor);
 
-	generateDistributions(&testParticle,&ReactionObject1,stoppingTimes,intSpecies,numOfSamples,&exGenerator,baseFolder+"testDists.txt");
+	vector<vector<vector<double> > > testData=generateDistributions(&testParticle,&ReactionObject1,stoppingTimes,intSpecies,numOfSamples,&exGenerator,baseFolder+"testDists.txt");
 	
 	return 0;
 }
