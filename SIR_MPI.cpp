@@ -533,10 +533,10 @@ tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(P
 	return calculateMeansAndVar(inData);
 }
 
-void generateDistributions(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator, string outFile){
+vector<vector<vector<double> > > generateDistributions(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator, string outFile){
 	vector<vector<vector<double> > > inData=performGillespieSimulation(inParticle, inReactionObject, reportTimes, specNum, numOfRuns, inGenerator);
 	ofstream outStream(outFile);
-	for(int i=0;i<(int)reportTimes.size();i++){
+	for(int i=1;i<(int)reportTimes.size();i++){
 		outStream<<reportTimes[i]<<",";
 		for(int j=0;j<specNum.size()-1;j++){
 			outStream<<reportTimes[i]<<",";
@@ -553,6 +553,7 @@ void generateDistributions(Particle* inParticle, Gillespie* inReactionObject, ve
 		outStream<<endl;
 	}
 	outStream.close();
+	return inData;
 }
 
 vector<double> readVectorFile(string inString){

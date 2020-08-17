@@ -26,11 +26,11 @@ class Gillespie{
 	vector<double> reactConsts;
 	vector<vector<int> > changeCoeffs;
 	vector<int> resetSpecies;
-	vector<vector<int> > propCoeffs;
+	void printProp();
 	
 	
 	private:
-	
+	vector<vector<int> > propCoeffs;
 	vector<double> propVector;
 	
 };
