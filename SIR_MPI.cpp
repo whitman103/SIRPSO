@@ -169,6 +169,18 @@ Particle::Particle(int numOfParameters, vector<double> Parameters, vector<double
 	scalingFactor=scalingSize;
 }
 
+Particle::Particle(int numOfParameters, vector<double> Parameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize){
+	currentSolution.resize(numOfParameters);
+    bestSolution.resize(numOfParameters);
+    currentVelocity.resize(numOfParameters);
+    interactionFunctions=initFunctions;
+    bestFitness=0;
+    currentFitness=0;
+	currentSolution=Parameters;
+	scalingFactor=scalingSize;
+	bounds=initBounds;
+}
+
 Particle::~Particle(){
 }
 
@@ -251,6 +263,12 @@ double fourthInteraction(Particle* currentParticle, vector<double>& species){
 vector<double> Particle::convertFromParticleToGillespie(){
 	unwrapParameters();
 	vector<double> outConsts={beta/(double)scalingFactor,gamma,c,p,delta};
+	return outConsts;
+}
+
+vector<double> Particle::pVavConvertParticleGillespie(){
+	unwrap_pVavParameters();
+	vector<double> outConsts={k0,k1,k2,k3,k4,k5};
 	return outConsts;
 }
 
@@ -519,6 +537,30 @@ tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(ve
 	
 	
 	return make_tuple(outMeans, outVar);
+}
+
+tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<int> > >&inDist){
+	vector<vector<double> > outMeans(inDist.size(), vector<double> (inDist[0].size(),0));
+	vector<vector<double> > outVar=outMeans;
+	double interHold(0);
+	for(int i=0;i<(int)inDist.size();i++){
+		for(int j=0;j<(int)inDist[i].size();j++){
+			interHold=0;
+			for(int k=0;k<(int)inDist[i][j].size();k++){
+				interHold+=inDist[i][j][k]/(double)inDist[i][j].size();
+			}
+			outMeans[i][j]=interHold;
+			interHold=0;
+			for(int k=0;k<(int)inDist[i][j].size();k++){
+				interHold+=pow(inDist[i][j][k]-outMeans[i][j],2);
+			}
+			outVar[i][j]=sqrt(interHold)/(double)inDist[i][j].size();
+		}
+	}
+	
+	
+	return make_tuple(outMeans, outVar);
+
 }
 
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){

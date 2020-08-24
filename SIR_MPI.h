@@ -59,6 +59,7 @@ class Particle{
     public:
     Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
 	Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+	Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
 	~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
@@ -78,6 +79,7 @@ class Particle{
 	void divideBeta();
 	void multiplyBeta();
 	void unwrap_pVavParameters();
+	vector<double> pVavConvertParticleGillespie();
 
     private:
 };
@@ -120,6 +122,8 @@ vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle
 
 tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<double> > >& inDist);
 
+tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<int> > >&inDist);
+
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns);
 
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator);
@@ -129,5 +133,7 @@ vector<vector<vector<double> > > generateDistributions(Particle* inParticle, Gil
 tuple<double,double,double,double,double> readParameterData(string inFile);
 
 vector<double> readVectorFile(string inString);
+
+
 
 #endif

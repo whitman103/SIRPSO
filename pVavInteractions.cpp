@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <string>
+#include <tuple>
 
 using namespace std;
 
@@ -87,5 +89,49 @@ double dSHP1Vav(Particle* inParticle, vector<double>& currentSpecies){
 	return (complexForm+complexBreak+phosphor);
 }
 	
+double fitnessFunction_pVav(vector<vector<vector<int> > >& trueDistribution, vector<vector<vector<int> > >& testDistribution, string fitnessStyle){
+	tuple<vector<vector<double> >, vector<vector<double> > > trueValues=calculateMeansAndVar(trueDistribution);
+	tuple<vector<vector<double> >, vector<vector<double> > > testValues=calculateMeansAndVar(testDistribution);
+	double outValue(0);
+	if(fitnessStyle=="pVav_Means_singlePoint"){
+		outValue+=pow(get<0>(trueValues)[0][3]-get<0>(testValues)[0][3],2);
+	}
+	return outValue;
+
+}
+
+vector<vector<vector<int> > > pVav_Gillespie(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
+	vector<vector<vector<int> > > outData(reportTimes.size()-1,vector<vector<int> > (specNum.size(), vector<int> (numOfRuns,0)));
+	(*inReactionObject).reactConsts=(*inParticle).pVavConvertParticleGillespie();
+	for(int run=0;run<numOfRuns;run++){
+		specNum=(*inReactionObject).resetSpecies;
+		double currentTime(0);
+		int reportIndex(0);
+		do{
+			tuple<int,double> hold=(*inReactionObject).PerformTimeStep2(specNum);
+			currentTime+=get<1>(hold);
+			
+			
+			if(get<1>(hold)<0){
+				for(int index=reportIndex;index<(int)reportTimes.size();index++){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[index][i][run]=specNum[i];
+					}
+				}
+				reportIndex=(int)reportTimes.size();
+			}
+			else{
+				(*inReactionObject).specChange(specNum,get<0>(hold),(*inReactionObject).changeCoeffs);
+				if(currentTime>reportTimes[reportIndex+1]){
+					for(int i=0;i<(int)specNum.size();i++){
+						outData[reportIndex][i][run]=specNum[i];
+					}
+					reportIndex++;
+				}
+			}
+		}while(reportIndex<(int)reportTimes.size()-1);
+	}
 	
+	return outData;
+}
 	
