@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_pVavTests";
+	string outputFolder="DataFolder_pVavTests_"+stoi(argv[1]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
