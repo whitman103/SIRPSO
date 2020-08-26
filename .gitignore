@@ -12,3 +12,5 @@ SIR_MPI.o
 *.o
 *.stackdump
 test.txt
+*.pdf
+*.r

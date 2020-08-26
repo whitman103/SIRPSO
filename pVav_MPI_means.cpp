@@ -36,7 +36,7 @@ inline int randSite(int size){
 #include "SIR_MPI.h"
 #include "pVavInteractions.h"
 
-
+int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>& stoppingTimes, string inFile);
 
 int main(int argc, char** argv){
 
@@ -60,16 +60,25 @@ int main(int argc, char** argv){
     bool exNoise(false);
 	//T, I, V, R
 	const int numOfSpecies(6);
+	
 	vector<double> speciesVector={600,200,0,0,60,0};
+
+	//k0, k1, k2, k3, k4, k5, k6
+	const int numOfParameters(6);
+	vector<double> initParameters={0.008,0.1,1.0,0.013904,0.05,0.07};
+	vector<double> initBounds={0.1,1,10,0.1,1,1};
+	vector<double> stoppingTimes={0,100};
+	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes, argv[2]);
+	if(errorFlag==1){
+		cout<<"loading data didn't work"<<endl;
+		return 0;
+	}
+
 	int scalingFactor(1);
 	transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<double>(),std::placeholders::_1,scalingFactor));
 	vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
 	vector<double> resetSpecies=speciesVector;
 	vector<int> intSpeciesReset=intSpecies;
-	//k0, k1, k2, k3, k4, k5, k6
-	const int numOfParameters(6);
-	vector<double> initParameters={0.008,0.1,1.0,0.013904,0.05,0.07};
-	vector<double> initBounds={0.1,1,10,0.1,1,1};
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
 	const int numOfIterations(20);
@@ -90,7 +99,7 @@ int main(int argc, char** argv){
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
 
 	
-    vector<double> stoppingTimes={0,100};
+    
 	double timeIncrement(0.002);
 
 	map<string,int> styleMap;
@@ -391,6 +400,44 @@ int main(int argc, char** argv){
 
     return 0;
 }
+
+int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>& stoppingTimes, string inFile){
+	int errorOut(0);
+	ifstream inData(inFile);
+	int indexLoop(0);
+	double doubleHold(0);
+	int intHold(0);
+	inData>>indexLoop;
+	if(indexLoop!=speciesVector.size()){
+		errorOut=1;
+		return errorOut;
+	}
+	for(int i=0;i<indexLoop;i++){
+		inData>>intHold;
+		speciesVector[i]=intHold;
+	}
+	inData>>indexLoop;
+	if(initParameters.size()!=indexLoop){
+		errorOut=1;
+		return errorOut;
+	}
+	for(int i=0;i<indexLoop;i++){
+		inData>>doubleHold;
+		initParameters[i]=doubleHold;
+	}
+	inData>>indexLoop;
+	stoppingTimes.resize(indexLoop);
+	for(int i=0;i<indexLoop;i++){
+		inData>>doubleHold;
+		stoppingTimes[i]=doubleHold;
+	}
+
+
+	return errorOut;
+
+}
+
+
 
 
 
