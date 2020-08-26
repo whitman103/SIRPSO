@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_pVavTests_"+stoi(argv[1]);
+	string outputFolder="DataFolder_pVavTests_"+string(argv[1]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
@@ -86,7 +86,7 @@ int main(int argc, char** argv){
 	const int numOfSamples(500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(25);
+	const int numOfRuns(100);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
