@@ -47,8 +47,14 @@ tuple<int,double> Gillespie::PerformTimeStep2(vector<int>& specNum){
 	double r1=(double) generator()/(double)generator.max();
 	double r2=(double) generator()/(double)generator.max();
 	double a0=sumupslow(specNum,reactConsts,propCoeffs,propVector);
-	get<0>(output)=r1choice(a0,r1,propVector);
-	get<1>(output)=tau(a0,r2);
+	if(a0==0.){
+		get<0>(output)=-1;
+		get<1>(output)=-5;
+	}
+	else{
+		get<0>(output)=r1choice(a0,r1,propVector);
+		get<1>(output)=tau(a0,r2);
+	}
 	return output;
 }
 	

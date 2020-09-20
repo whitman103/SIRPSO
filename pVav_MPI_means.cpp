@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_pVavTests_"+string(argv[1]);
+	string outputFolder="DataFolder_pVavTests_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
     boost::normal_distribution<> standardNormal(0,1);
@@ -66,9 +66,12 @@ int main(int argc, char** argv){
 	//k0, k1, k2, k3, k4, k5, k6
 	const int numOfParameters(6);
 	vector<double> initParameters={0.008,0.1,1.0,0.013904,0.05,0.07};
-	vector<double> initBounds={0.1,1,10,0.1,1,1};
 	vector<double> stoppingTimes={0,100};
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes, argv[2]);
+	vector<double> initBounds=initParameters;
+	for(int i=0;i<(int)initBounds.size();i++){
+		initBounds[i]=initParameters[i]*100;
+	}
 	if(errorFlag==1){
 		cout<<"loading data didn't work"<<endl;
 		return 0;
@@ -86,7 +89,7 @@ int main(int argc, char** argv){
 	const int numOfSamples(500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(100);
+	const int numOfRuns(20);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -202,6 +205,7 @@ int main(int argc, char** argv){
 	if(taskID==0){
 		outFile.open(outputFolder+customString+"bestParticles"+".txt");
 	}
+	monitorFile.open(outputFolder+"ParticleCheck_"+to_string(taskID)+".txt");
 	
 
 	for(int run=0;run<numOfRuns;run++){
@@ -350,22 +354,25 @@ int main(int argc, char** argv){
 
 				//iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
-					intSpecies=intSpeciesReset;
+					for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+						monitorFile<<threadParticle.currentSolution[i]<<" ";
+					}
+					monitorFile<<endl;
 					if(!exNoise){
-					intSpecies=intSpeciesReset;
-					testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
-				}
-				else{
-					intSpecies=intSpeciesReset;
-					testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);//needs to be updated for extrinsic noise
-				}
+						intSpecies=intSpeciesReset;
+						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
+					}
+					else{
+						intSpecies=intSpeciesReset;
+						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);//needs to be updated for extrinsic noise
+					}
 
 					threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_singlePoint");
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
 						threadParticle.bestFitness=threadParticle.currentFitness;
 					}
-					for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+					for(int i=0;i<(int)threadParticle.bestSolution.size();i++){
 						parameterPassVector[i]=threadParticle.bestSolution[i];
 					}
 
