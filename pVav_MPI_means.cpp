@@ -63,7 +63,7 @@ int main(int argc, char** argv){
 	
 	vector<double> speciesVector={600,200,0,0,60,0};
 
-	//k0, k1, k2, k3, k4, k5, k6
+	//k0, k1, k2, k3, k4, k5
 	const int numOfParameters(6);
 	vector<double> initParameters={0.008,0.1,1.0,0.013904,0.05,0.07};
 	vector<double> stoppingTimes={0,100};
@@ -185,7 +185,7 @@ int main(int argc, char** argv){
 	
 	
 	
-	int sizeOfParameterVector(numOfParameters);
+	int sizeOfParameterVector(initParameters.size());
 	double fitnessCollection[numOfParticles];
 	double parameterPassVector[sizeOfParameterVector];
 	double parameterMatrixHold[sizeOfParameterVector*numOfParticles];

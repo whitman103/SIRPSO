@@ -32,7 +32,7 @@ void Gillespie::printProp(){
 }
 
 tuple<int,double> Gillespie::PerformTimeStep(vector<int>& specNum){
-	tuple<int,double> output={0,0};
+	tuple<int,double> output=make_tuple(0,0);
 	double r1=(double) generator()/(double)generator.max();
 	double r2=(double) generator()/(double)generator.max();
 	double a0=sumupslow(specNum,reactConsts,propCoeffs,propVector);
@@ -43,7 +43,7 @@ tuple<int,double> Gillespie::PerformTimeStep(vector<int>& specNum){
 }
 
 tuple<int,double> Gillespie::PerformTimeStep2(vector<int>& specNum){
-	tuple<int,double> output={0,0};
+	tuple<int,double> output=make_tuple(0,0);
 	double r1=(double) generator()/(double)generator.max();
 	double r2=(double) generator()/(double)generator.max();
 	double a0=sumupslow(specNum,reactConsts,propCoeffs,propVector);
