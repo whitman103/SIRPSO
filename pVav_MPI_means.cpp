@@ -335,7 +335,7 @@ int main(int argc, char** argv){
 
 				
 
-				threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_singlePoint");
+				threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_MultipleTrans");
 				threadParticle.bestFitness=threadParticle.currentFitness;
 				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){

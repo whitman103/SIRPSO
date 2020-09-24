@@ -6,6 +6,7 @@
         "iosfwd": "cpp",
         "vector": "cpp",
         "tuple": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "cmath": "cpp"
     }
 }

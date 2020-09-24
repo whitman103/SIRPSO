@@ -96,6 +96,11 @@ double fitnessFunction_pVav(vector<vector<vector<int> > >& trueDistribution, vec
 	if(fitnessStyle=="pVav_Means_singlePoint"){
 		outValue+=pow(get<0>(trueValues)[0][3]-get<0>(testValues)[0][3],2);
 	}
+	if(fitnessStyle=="pVav_Means_MultipleTrans"){
+		for(int i=0;i<(int)get<0>(trueValues).size();i++){
+			outValue+=pow(get<0>(trueValues)[i][3]-get<0>(testValues)[i][3],2);
+		}
+	}
 	return outValue;
 
 }
