@@ -113,7 +113,7 @@ vector<vector<vector<int> > > pVav_Gillespie(Particle* inParticle, Gillespie* in
 			
 			
 			if(get<1>(hold)<0){
-				for(int index=reportIndex;index<(int)reportTimes.size();index++){
+				for(int index=reportIndex;index<(int)reportTimes.size()-1;index++){
 					for(int i=0;i<(int)specNum.size();i++){
 						outData[index][i][run]=specNum[i];
 					}

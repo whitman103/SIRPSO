@@ -68,6 +68,7 @@ int main(int argc, char** argv){
 	vector<double> initParameters={0.008,0.1,1.0,0.013904,0.05,0.07};
 	vector<double> stoppingTimes={0,100};
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes, argv[2]);
+	cout<<stoppingTimes.size()<<endl;
 	vector<double> initBounds=initParameters;
 	for(int i=0;i<(int)initBounds.size();i++){
 		initBounds[i]=initParameters[i]*100;
@@ -94,9 +95,9 @@ int main(int argc, char** argv){
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
 	vector<double> means;
-	loadCovariance(means, inValues,"outCov");
+	/*loadCovariance(means, inValues,"outCov");
 	
-	vector<vector<double> > outDecomp=generateCholesky(inValues);
+	vector<vector<double> > outDecomp=generateCholesky(inValues);*/
 
 
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
