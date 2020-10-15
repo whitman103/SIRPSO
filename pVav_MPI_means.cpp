@@ -85,12 +85,12 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(20);
+	const int numOfIterations(100);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(20);
+	const int numOfRuns(100);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -202,11 +202,10 @@ int main(int argc, char** argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
 	
 	ofstream outFile;
-	ofstream monitorFile;
 	if(taskID==0){
 		outFile.open(outputFolder+customString+"bestParticles"+".txt");
 	}
-	monitorFile.open(outputFolder+"ParticleCheck_"+to_string(taskID)+".txt");
+	
 	
 
 	for(int run=0;run<numOfRuns;run++){
@@ -355,10 +354,7 @@ int main(int argc, char** argv){
 
 				//iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
-					for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
-						monitorFile<<threadParticle.currentSolution[i]<<" ";
-					}
-					monitorFile<<endl;
+					
 					if(!exNoise){
 						intSpecies=intSpeciesReset;
 						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
@@ -401,7 +397,6 @@ int main(int argc, char** argv){
 
 	}
 	outFile.close();
-	monitorFile.close();
     
 	MPI_Finalize();
 	
