@@ -1,8 +1,8 @@
-Sys.setenv(R_GSCMD = "C:/Program Files (x86)/gs/gs9.26/bin/gswin32c.exe")
+Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.27/bin/gswin64c.exe")
 library(extrafont)
 library(Cairo)
 graphics.off()
-baseFolder="D:\\Downloads\\10_15_2020\\DataFolder_pVavTests_0\\" 
+baseFolder="D:\\Downloads\\10_21_2020\\DataFolder_pVavTests_2\\" 
 precursor="NoDynamicsLater"
 
 outNoise=paste(baseFolder,precursor,"Noise.pdf",sep="")

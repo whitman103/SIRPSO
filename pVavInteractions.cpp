@@ -100,6 +100,9 @@ double fitnessFunction_pVav(vector<vector<vector<int> > >& trueDistribution, vec
 		for(int i=0;i<(int)get<0>(trueValues).size();i++){
 			outValue+=pow(get<0>(trueValues)[i][3]-get<0>(testValues)[i][3],2);
 		}
+		for(int i=0;i<(int)get<0>(trueValues).size();i++){
+			outValue+=pow(get<0>(trueValues)[i][0]-get<0>(testValues)[i][0],2);
+		}
 	}
 	return outValue;
 
