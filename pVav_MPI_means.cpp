@@ -71,7 +71,7 @@ int main(int argc, char** argv){
 	cout<<stoppingTimes.size()<<endl;
 	vector<double> initBounds=initParameters;
 	for(int i=0;i<(int)initBounds.size();i++){
-		initBounds[i]=initParameters[i]*100;
+		initBounds[i]=1;
 	}
 	if(errorFlag==1){
 		cout<<"loading data didn't work"<<endl;
