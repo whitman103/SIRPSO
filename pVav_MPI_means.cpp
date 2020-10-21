@@ -364,7 +364,7 @@ int main(int argc, char** argv){
 						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);//needs to be updated for extrinsic noise
 					}
 
-					threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_singlePoint");
+					threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_MultipleTrans");
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
 						threadParticle.bestFitness=threadParticle.currentFitness;
