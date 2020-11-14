@@ -88,7 +88,14 @@ double dSHP1Vav(Particle* inParticle, vector<double>& currentSpecies){
 	double phosphor(-1.*(*inParticle).k5*currentSpecies[5]);
 	return (complexForm+complexBreak+phosphor);
 }
+
+double fitnessFunction_ODE(vector<vector<vector<double> > >&trueDistribution, vector<vector<vector<double> > >&testDistribution, string fitnessStyle){
+	tuple<vector<vector<double> >, vector<vector<double> > > trueValues=calculateMeansAndVar(trueDistribution);
+	tuple<vector<vector<double> >, vector<vector<double> > > testValues=calculateMeansAndVar(testDistribution);
+
 	
+}
+
 double fitnessFunction_pVav(vector<vector<vector<int> > >& trueDistribution, vector<vector<vector<int> > >& testDistribution, string fitnessStyle){
 	tuple<vector<vector<double> >, vector<vector<double> > > trueValues=calculateMeansAndVar(trueDistribution);
 	tuple<vector<vector<double> >, vector<vector<double> > > testValues=calculateMeansAndVar(testDistribution);

@@ -181,6 +181,18 @@ Particle::Particle(int numOfParameters, vector<double> Parameters, vector<double
 	bounds=initBounds;
 }
 
+Particle::Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double,double> > initBounds, vector<double(*)(Particle*,vector<double>&)> initFunctions, int scalingSize){
+	currentSolution.resize(numOfParameters);
+    bestSolution.resize(numOfParameters);
+    currentVelocity.resize(numOfParameters);
+    interactionFunctions=initFunctions;
+    bestFitness=0;
+    currentFitness=0;
+	currentSolution=Parameters;
+	scalingFactor=scalingSize;
+	twoBounds=initBounds;
+}
+
 Particle::~Particle(){
 }
 
@@ -214,6 +226,35 @@ double Particle::performUpdate(boost::mt19937* inRand, double* globalBest, Fuzzy
         } else{
             if((currentSolution[i]+proposedUpdate)>bounds[i]){
                 currentSolution[i]=bounds[i];
+                currentVelocity[i]=-1.*proposedUpdate*1./10.;
+            } else{
+                currentSolution[i]+=proposedUpdate;
+                currentVelocity[i]=proposedUpdate;
+            }
+        }
+    }
+	return 0;
+}
+
+double Particle::twoBoundPerformUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct){
+	for(int i=0;i<(int)currentSolution.size();i++){
+		auto[lowerBound,upperBound]=twoBounds[i];
+        double proposedUpdate(0);
+        double rand1((double)(*inRand)()/(double)(*inRand).max());
+        double rand2((double)(*inRand)()/(double)(*inRand).max());
+        proposedUpdate+=(*fuzzyStruct).inertia*currentVelocity[i];
+        proposedUpdate+=(*fuzzyStruct).social*rand1*(globalBest[i]-currentSolution[i]);
+        proposedUpdate+=(*fuzzyStruct).cognitive*rand2*(bestSolution[i]-currentSolution[i]);
+        if(fabs(proposedUpdate)>(*fuzzyStruct).U*bounds[i]){
+            proposedUpdate=(*fuzzyStruct).U*bounds[i]*sgn(proposedUpdate);
+        }
+
+        if((currentSolution[i]+proposedUpdate)<lowerBound){
+            currentSolution[i]=lowerBound;
+            currentVelocity[i]=-1.*proposedUpdate*1./10.;
+        } else{
+            if((currentSolution[i]+proposedUpdate)>upperBound){
+                currentSolution[i]=upperBound;
                 currentVelocity[i]=-1.*proposedUpdate*1./10.;
             } else{
                 currentSolution[i]+=proposedUpdate;

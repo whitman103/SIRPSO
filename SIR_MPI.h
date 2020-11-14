@@ -60,11 +60,13 @@ class Particle{
     Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
 	Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
 	Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+	Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double,double> > bounds, vector<double(*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
 	~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
     vector<double> currentVelocity;
     vector<double> bounds;
+	vector<tuple<double,double> > twoBounds;
     vector<double (*)(Particle*,vector<double>&)> interactionFunctions;
     double bestFitness;
     double currentFitness;
@@ -74,6 +76,7 @@ class Particle{
 
     void dumpParticleDetails(ofstream* outStream);
     double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
+	double twoBoundPerformUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
 	vector<double> convertFromParticleToGillespie();
 	int scalingFactor;
 	void divideBeta();
