@@ -37,6 +37,7 @@ inline int randSite(int size){
 #include "pVavInteractions.h"
 
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>& stoppingTimes, string inFile);
+int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
 
 int main(int argc, char** argv){
 
