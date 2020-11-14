@@ -404,9 +404,11 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	int indexLoop(0);
 	double doubleHold(0);
 	int intHold(0);
+	ofstream errorFile("FuckedUp.txt");
 	inData>>indexLoop;
 	if(indexLoop!=speciesVector.size()){
 		errorOut=1;
+		errorFile<<"First"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
@@ -416,6 +418,7 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	inData>>indexLoop;
 	if(initParameters.size()!=indexLoop){
 		errorOut=1;
+		errorFile<<"Second"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
@@ -438,9 +441,11 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	double doubleHold(0);
 	double doubleHold2(0);
 	int intHold(0);
+	ofstream errorFile("FuckedUp.txt");
 	inData>>indexLoop;
 	if(indexLoop!=speciesVector.size()){
 		errorOut=1;
+		errorFile<<"First"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
@@ -450,6 +455,7 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	inData>>indexLoop;
 	if(initParameters.size()!=indexLoop){
 		errorOut=1;
+		errorFile<<"Second"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
