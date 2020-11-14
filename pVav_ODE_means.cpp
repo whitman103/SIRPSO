@@ -214,7 +214,8 @@ int main(int argc, char** argv){
 		Particle threadParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
 		generator.seed(taskID);
 		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
-			threadParticle.currentSolution[i]=randPull()*initBounds[i];
+			auto[lowerBound,upperBound]=twoBounds[i];
+			threadParticle.currentSolution[i]=randPull()*(upperBound-lowerBound);
 		}
 		
         vector<vector<vector<int> > > testDistributions;
