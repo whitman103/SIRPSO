@@ -115,7 +115,7 @@ int main(int argc, char** argv){
 	solutionStructure.timeIncrement=timeIncrement;
 	solutionStructure.stoppingTimes=stoppingTimes;
 
-	Particle trueParticle=Particle(numOfParameters,initParameters,initBounds,interactionFuncts,scalingFactor);
+	Particle trueParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
 
 	vector<vector<double> > trueArray;
     vector<vector<vector<int> > > trueDistributions(stoppingTimes.size()-1,vector<vector<int> > (numOfSpecies,vector<int> (numOfRuns,0)));
@@ -211,7 +211,7 @@ int main(int argc, char** argv){
 		double globalBestFitness(1e26);
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
-		Particle threadParticle=Particle(numOfParameters,initParameters,initBounds,interactionFuncts,scalingFactor);
+		Particle threadParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
 		generator.seed(taskID);
 		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 			threadParticle.currentSolution[i]=randPull()*initBounds[i];
