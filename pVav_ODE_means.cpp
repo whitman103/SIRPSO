@@ -76,7 +76,7 @@ int main(int argc, char** argv){
 		cout<<"loading data didn't work"<<endl;
 		return 0;
 	}
-
+	
 	int scalingFactor(1);
 	transform(speciesVector.begin(),speciesVector.end(),speciesVector.begin(),bind(std::multiplies<double>(),std::placeholders::_1,scalingFactor));
 	vector<int> intSpecies(speciesVector.begin(),speciesVector.end());
@@ -394,7 +394,6 @@ int main(int argc, char** argv){
 	outFile.close();
     
 	MPI_Finalize();
-	
 
     return 0;
 }
@@ -463,8 +462,8 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 		inData>>doubleHold;
 		stoppingTimes[i]=doubleHold;
 	}
-	bounds.resize(indexLoop);
-	for(int i=0;i<indexLoop;i++){
+	bounds.resize(initParameters.size());
+	for(int i=0;i<(int)bounds.size();i++){
 		bounds[i]=make_tuple(initParameters[i]/10.,initParameters[i]*10.);
 	}
 	return errorOut;
