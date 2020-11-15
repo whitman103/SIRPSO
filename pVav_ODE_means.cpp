@@ -13,7 +13,7 @@
 #include <string>
 #include <functional>
 #include <map>
-#include <mpi.h>
+//#include <mpi.h>
 	using namespace std;
 #include <boost/random/mersenne_twister.hpp>
 	boost::mt19937 generator;
@@ -119,7 +119,7 @@ int main(int argc, char** argv){
 
 	vector<vector<double> > trueArray;
     vector<vector<vector<int> > > trueDistributions(stoppingTimes.size()-1,vector<vector<int> > (numOfSpecies,vector<int> (numOfRuns,0)));
-	
+
 	switch(solutionStyle){
 		case 0:
 		{
@@ -130,13 +130,14 @@ int main(int argc, char** argv){
 			else{
 				const int numSamples(2500);
 				for(int sample=0;sample<numSamples;sample++){
-					vector<double> baseNormal(numOfSpecies,0);
+					speciesVector=resetSpecies;
+					/*vector<double> baseNormal(numOfSpecies,0);
 					for(int i=0;i<(int)baseNormal.size();i++){
 						baseNormal[i]=normalGenerator();
 					}
 					baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
-					transform(baseNormal.begin(),baseNormal.end(),baseNormal.begin(),bind(std::multiplies<double>(),std::placeholders::_1,(double)scalingFactor));
-					vector<vector<double> > noiseData=generateData(&trueParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
+					transform(baseNormal.begin(),baseNormal.end(),baseNormal.begin(),bind(std::multiplies<double>(),std::placeholders::_1,(double)scalingFactor));*/
+					vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					for(int i=0;i<(int)trueArray.size();i++){
 						for(int j=0;j<(int)trueArray[i].size();j++){
 							trueArray[i][j]+=noiseData[i][j]/(double)numSamples;
@@ -167,8 +168,6 @@ int main(int argc, char** argv){
 		return 0;
 	}
 	
-
-
 	double inDelta(10);
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
 
@@ -231,12 +230,13 @@ int main(int argc, char** argv){
 				else{
 					const int numSamples(2500);
 					for(int sample=0;sample<numSamples;sample++){
-						vector<double> baseNormal(numOfSpecies,0);
+						/*vector<double> baseNormal(numOfSpecies,0);
 						for(int i=0;i<(int)baseNormal.size();i++){
 							baseNormal[i]=normalGenerator();
 						}
-						baseNormal=transformInit(baseNormal, inValues, speciesVector,&generator);
-						vector<vector<double> > noiseData=generateData(&threadParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
+						baseNormal=transformInit(baseNormal, inValues, speciesVector,&generator);*/
+						speciesVector=resetSpecies;
+						vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 						for(int i=0;i<(int)testArray.size();i++){
 							for(int j=0;j<(int)testArray[i].size();j++){
 								testArray[i][j]+=noiseData[i][j]/(double)numSamples;
@@ -274,12 +274,13 @@ int main(int argc, char** argv){
 					else{
 						const int numSamples(2500);
 						for(int sample=0;sample<numSamples;sample++){
-							vector<double> baseNormal(numOfSpecies,0);
+							/*vector<double> baseNormal(numOfSpecies,0);
 							for(int i=0;i<(int)baseNormal.size();i++){
 								baseNormal[i]=normalGenerator();
 							}
-							baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
-							vector<vector<double> > noiseData=generateData(&threadParticle,baseNormal,&solutionStructure,styleMap["RungeKutta"]);
+							baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);*/
+							speciesVector=resetSpecies;
+							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 							for(int i=0;i<(int)testArray.size();i++){
 								for(int j=0;j<(int)testArray[i].size();j++){
 									testArray[i][j]+=noiseData[i][j]/(double)numSamples;
@@ -381,6 +382,8 @@ int main(int argc, char** argv){
 					
 				}
 			}*/
+			default:
+			break;
 		}
 		if(taskID==0){
 			outFile<<globalBestFitness<<" ";
@@ -394,7 +397,6 @@ int main(int argc, char** argv){
 	outFile.close();
     
 	MPI_Finalize();
-
     return 0;
 }
 
@@ -441,11 +443,9 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	double doubleHold(0);
 	double doubleHold2(0);
 	int intHold(0);
-	ofstream errorFile("FuckedUp.txt");
 	inData>>indexLoop;
 	if(indexLoop!=speciesVector.size()){
 		errorOut=1;
-		errorFile<<"First"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
@@ -455,7 +455,6 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	inData>>indexLoop;
 	if(initParameters.size()!=indexLoop){
 		errorOut=1;
-		errorFile<<"Second"<<endl;
 		return errorOut;
 	}
 	for(int i=0;i<indexLoop;i++){
