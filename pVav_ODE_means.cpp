@@ -13,7 +13,7 @@
 #include <string>
 #include <functional>
 #include <map>
-//#include <mpi.h>
+#include <mpi.h>
 	using namespace std;
 #include <boost/random/mersenne_twister.hpp>
 	boost::mt19937 generator;
