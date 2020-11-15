@@ -245,8 +245,8 @@ double Particle::twoBoundPerformUpdate(boost::mt19937* inRand, double* globalBes
         proposedUpdate+=(*fuzzyStruct).inertia*currentVelocity[i];
         proposedUpdate+=(*fuzzyStruct).social*rand1*(globalBest[i]-currentSolution[i]);
         proposedUpdate+=(*fuzzyStruct).cognitive*rand2*(bestSolution[i]-currentSolution[i]);
-        if(fabs(proposedUpdate)>(*fuzzyStruct).U*bounds[i]){
-            proposedUpdate=(*fuzzyStruct).U*bounds[i]*sgn(proposedUpdate);
+        if(fabs(proposedUpdate)>(*fuzzyStruct).U*upperBound){
+            proposedUpdate=(*fuzzyStruct).U*upperBound*sgn(proposedUpdate);
         }
 
         if((currentSolution[i]+proposedUpdate)<lowerBound){
