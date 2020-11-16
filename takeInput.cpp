@@ -4,6 +4,10 @@
 #include <string>
 #include <tuple>
 
+#include "SIR_MPI.h"
+#include "pVavInteractions.h"
+#include "GillespieFunctions.h"
+
 using namespace std;
 
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
@@ -15,7 +19,28 @@ int main(int argc, char** argv){
 	vector<double> stoppingTimes={0,100};
 	vector<tuple<double,double> > twoBounds;
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes,twoBounds, "InputFolder//outputOne.txt");
+
+	double timeIncrement(0.002);
+
+	SolStruct solutionStructure;
+	solutionStructure.timeIncrement=timeIncrement;
+	solutionStructure.stoppingTimes=stoppingTimes;
+
+	double scalingFactor(1);
+
+	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
 	
+	Particle trueParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
+
+	vector<vector<double> > outData=generateData(&trueParticle,speciesVector,&solutionStructure,0);
+
+	for(int i=0;i<(int)outData.size();i++){
+		for(int j=0;j<(int)outData[i].size();j++){
+			cout<<outData[i][j]<<" ";
+		}
+		cout<<endl;
+	}
+
 	
 
 	return 0;

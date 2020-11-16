@@ -84,12 +84,12 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(100);
+	const int numOfIterations(500);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(500);
+	const int numOfSamples(1);
 
 	//Number of Particle sets to run
-	const int numOfRuns(100);
+	const int numOfRuns(200);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
@@ -100,7 +100,6 @@ int main(int argc, char** argv){
 
 
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
-
 	
     
 	double timeIncrement(0.002);
@@ -128,8 +127,8 @@ int main(int argc, char** argv){
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 			else{
-				const int numSamples(2500);
-				for(int sample=0;sample<numSamples;sample++){
+				
+				for(int sample=0;sample<numOfSamples;sample++){
 					speciesVector=resetSpecies;
 					/*vector<double> baseNormal(numOfSpecies,0);
 					for(int i=0;i<(int)baseNormal.size();i++){
@@ -140,7 +139,7 @@ int main(int argc, char** argv){
 					vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					for(int i=0;i<(int)trueArray.size();i++){
 						for(int j=0;j<(int)trueArray[i].size();j++){
-							trueArray[i][j]+=noiseData[i][j]/(double)numSamples;
+							trueArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
 						}
 					}
 				}
@@ -204,17 +203,16 @@ int main(int argc, char** argv){
 		outFile.open(outputFolder+customString+"bestParticles"+".txt");
 	}
 	
-	
+	generator.seed(taskID);
 
 	for(int run=0;run<numOfRuns;run++){
 		double globalBestFitness(1e26);
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
 		Particle threadParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
-		generator.seed(taskID);
 		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
 			auto[lowerBound,upperBound]=twoBounds[i];
-			threadParticle.currentSolution[i]=randPull()*(upperBound-lowerBound);
+			threadParticle.currentSolution[i]=pow(10,randPull()*log10(upperBound/lowerBound))*lowerBound;
 		}
 		
         vector<vector<vector<int> > > testDistributions;
@@ -228,8 +226,7 @@ int main(int argc, char** argv){
 					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 				}
 				else{
-					const int numSamples(2500);
-					for(int sample=0;sample<numSamples;sample++){
+					for(int sample=0;sample<numOfSamples;sample++){
 						/*vector<double> baseNormal(numOfSpecies,0);
 						for(int i=0;i<(int)baseNormal.size();i++){
 							baseNormal[i]=normalGenerator();
@@ -239,7 +236,7 @@ int main(int argc, char** argv){
 						vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 						for(int i=0;i<(int)testArray.size();i++){
 							for(int j=0;j<(int)testArray[i].size();j++){
-								testArray[i][j]+=noiseData[i][j]/(double)numSamples;
+								testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
 							}
 						}
 					}
@@ -272,7 +269,7 @@ int main(int argc, char** argv){
 						testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					}
 					else{
-						const int numSamples(2500);
+						const int numSamples(1);
 						for(int sample=0;sample<numSamples;sample++){
 							/*vector<double> baseNormal(numOfSpecies,0);
 							for(int i=0;i<(int)baseNormal.size();i++){
@@ -305,7 +302,6 @@ int main(int argc, char** argv){
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-					
 					threadParticle.twoBoundPerformUpdate(&generator,parameterPassVector,&fuzzyStruct);
 					
 				}
@@ -397,6 +393,7 @@ int main(int argc, char** argv){
 	outFile.close();
     
 	MPI_Finalize();
+
     return 0;
 }
 

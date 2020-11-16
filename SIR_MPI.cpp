@@ -323,10 +323,8 @@ void Particle::multiplyBeta(){
 
 void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, double currentTime, double stoppingTime, double deltaT){
     int numSpecies=speciesVec.size();
-    (*currentParticle).unwrapParameters();
-	(*currentParticle).divideBeta();
+    (*currentParticle).unwrap_pVavParameters();
     int n=(int)(((stoppingTime-currentTime))/(deltaT));
-
     vector<double (*)(Particle*,vector<double>&)> interactionPointer=(*currentParticle).interactionFunctions;
 
     for(int t=0;t<n;t++){
@@ -354,7 +352,6 @@ void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, dou
             speciesVec[i]+=(k1[i]/6.+k2[i]/3.+k3[i]/3.+k4[i]/6.);
         }
     }
-	(*currentParticle).multiplyBeta();
 }
 
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean){
@@ -376,8 +373,6 @@ double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> 
     }
     return interHold;
 }
-
-
 
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix){
     vector<vector<double> > choleskyOut(inMatrix.size(),vector<double>(inMatrix[0].size(),0));
