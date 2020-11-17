@@ -137,6 +137,8 @@ tuple<double,double,double,double,double> readParameterData(string inFile);
 
 vector<double> readVectorFile(string inString);
 
+double sykDataCompare(vector<double>& experimentalMeans, vector<double>& testMeans);
+
 
 
 #endif

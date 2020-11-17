@@ -660,3 +660,10 @@ tuple<double,double,double,double,double> readParameterData(string inFile){
 	return parameterSet;
 }
 
+double sykDataCompare(vector<double>& experimentalMeans, vector<double>& testMeans){
+	double outCompare(0);
+	for(int i=0;i<(int)experimentalMeans.size();i++){
+		outCompare+=pow(experimentalMeans[i]-testMeans[i],2);
+	}
+	return outCompare;
+}

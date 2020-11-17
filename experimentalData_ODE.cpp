@@ -38,7 +38,7 @@ inline int randSite(int size){
 
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>& stoppingTimes, string inFile);
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
-tuple<vector<double>,vector<double> > loadExperimentalData(string inFile)
+tuple<vector<double>,vector<double> > loadExperimentalData(string inFile);
 
 int main(int argc, char** argv){
 
@@ -49,10 +49,9 @@ int main(int argc, char** argv){
 	string outputFolder="DataFolder_ODEMeans_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
-    boost::normal_distribution<> standardNormal(0,1);
+    
     boost::mt19937 generator2;
     generator2.seed(generator());
-    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
 	boost::mt19937 exGenerator;
 	exGenerator.seed(generator2());
 
@@ -71,6 +70,8 @@ int main(int argc, char** argv){
 	vector<double> stoppingTimes={0,100};
 	vector<tuple<double,double> > twoBounds;
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes,twoBounds, argv[2]);
+
+    stoppingTimes={0,8,32,64,128,256};
 	
 
 	if(errorFlag==1){
@@ -99,11 +100,19 @@ int main(int argc, char** argv){
 	
 	vector<vector<double> > outDecomp=generateCholesky(inValues);*/
 
+    tuple<vector<double>,vector<double> > sykMeansAndSds=loadExperimentalData("SykData.txt");
+    vector<double> experimentalMeans=get<0>(sykMeansAndSds);
+    vector<double> experimentalSDs=get<1>(sykMeansAndSds);
+
+    
+
+   /* boost::normal_distribution<> standardNormal(scaledMean,scaledSigma);
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);*/
 
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
 	
     
-	double timeIncrement(0.002);
+	double timeIncrement(0.02);
 
 	map<string,int> styleMap;
 	styleMap["RungeKutta"]=0;
@@ -120,53 +129,6 @@ int main(int argc, char** argv){
 	vector<vector<double> > trueArray;
     vector<vector<vector<int> > > trueDistributions(stoppingTimes.size()-1,vector<vector<int> > (numOfSpecies,vector<int> (numOfRuns,0)));
 
-	switch(solutionStyle){
-		case 0:
-		{
-			if(!exNoise){
-				resetSpecies=speciesVector;
-				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-			}
-			else{
-				
-				for(int sample=0;sample<numOfSamples;sample++){
-					speciesVector=resetSpecies;
-					/*vector<double> baseNormal(numOfSpecies,0);
-					for(int i=0;i<(int)baseNormal.size();i++){
-						baseNormal[i]=normalGenerator();
-					}
-					baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
-					transform(baseNormal.begin(),baseNormal.end(),baseNormal.begin(),bind(std::multiplies<double>(),std::placeholders::_1,(double)scalingFactor));*/
-					vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-					for(int i=0;i<(int)trueArray.size();i++){
-						for(int j=0;j<(int)trueArray[i].size();j++){
-							trueArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
-						}
-					}
-				}
-			}
-		}
-		break;
-		case 1:
-		{
-			if(!exNoise){
-				intSpecies=intSpeciesReset;
-				Gillespie ReactionObject1("pVavCoeffs");
-				ReactionObject1.initializeData("pVavConsts",ReactionObject1.reactConsts,intSpeciesReset);
-				trueDistributions=pVav_Gillespie(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
-			}
-			else{
-				intSpecies=intSpeciesReset;
-				Gillespie ReactionObject1("pVavCoeffs");
-				ReactionObject1.initializeData("pVavConsts",ReactionObject1.reactConsts,intSpeciesReset);
-				trueDistributions=pVav_Gillespie(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);//Needs to be updated for extrinsic noise
-
-			}
-		}
-		break;
-		default:
-		return 0;
-	}
 	
 	double inDelta(10);
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
@@ -223,27 +185,21 @@ int main(int argc, char** argv){
 				//Initialize
 				vector<vector<double> > testArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
 				speciesVector=resetSpecies;
+                vector<double> testSykMeans(stoppingTimes.size()-1);
 				if(!exNoise){
 					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 				}
 				else{
 					for(int sample=0;sample<numOfSamples;sample++){
-						/*vector<double> baseNormal(numOfSpecies,0);
-						for(int i=0;i<(int)baseNormal.size();i++){
-							baseNormal[i]=normalGenerator();
-						}
-						baseNormal=transformInit(baseNormal, inValues, speciesVector,&generator);*/
-						speciesVector=resetSpecies;
+                        speciesVector=resetSpecies;
 						vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-						for(int i=0;i<(int)testArray.size();i++){
-							for(int j=0;j<(int)testArray[i].size();j++){
-								testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
-							}
-						}
+						for(int i=0;i<(int)noiseData.size();i++){
+                            testSykMeans[i]=noiseData[i][3];
+                        }
 					}
 				}
 
-				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				threadParticle.currentFitness=sykDataCompare(experimentalMeans,testSykMeans);
 				threadParticle.bestFitness=threadParticle.currentFitness;
 				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
@@ -272,22 +228,15 @@ int main(int argc, char** argv){
 					else{
 						const int numSamples(1);
 						for(int sample=0;sample<numSamples;sample++){
-							/*vector<double> baseNormal(numOfSpecies,0);
-							for(int i=0;i<(int)baseNormal.size();i++){
-								baseNormal[i]=normalGenerator();
-							}
-							baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);*/
 							speciesVector=resetSpecies;
 							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-							for(int i=0;i<(int)testArray.size();i++){
-								for(int j=0;j<(int)testArray[i].size();j++){
-									testArray[i][j]+=noiseData[i][j]/(double)numSamples;
-								}
-							}
+							for(int i=0;i<(int)noiseData.size();i++){
+                                testSykMeans[i]=noiseData[i][3];
+                            }
 						}
 					}
 					
-					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+					threadParticle.currentFitness=sykDataCompare(experimentalMeans,testSykMeans);
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
 						threadParticle.bestFitness=threadParticle.currentFitness;
@@ -480,6 +429,10 @@ tuple<vector<double>,vector<double> > loadExperimentalData(string inFile){
 	vector<double> sds(numOfTimes);
 	ifstream readIn(inFile);
 	double doubleHold(0);
+    double startMean(0);
+    double startSD(0);
+    readIn>>startMean;
+    readIn>>startSD;
 	for(int i=0;i<5;i++){
 		readIn>>doubleHold;
 		means[i]=doubleHold;
