@@ -108,7 +108,9 @@ int main(int argc, char** argv){
 	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<> > > extrinsicNoiseGenerators(3);
 	for(int i=0;i<(int)extrinsicNoiseGenerators.size();i++){
 		exNoiseEngines[i].seed(time(NULL));
-		boost::lognormal_distribution<> currentTest(means[i],inValues[i][i]);
+		double scaledMean(log(pow(means[i],2)/sqrt(pow(means[i],2)+pow(inValues[i][i],2))));
+		double scaledSD(sqrt(log(pow(means[i],2)+pow(inValues[i][i],2)/pow(means[i],2))));
+		boost::lognormal_distribution<> currentTest(scaledMean,scaledSD);
 		boost::variate_generator<boost::mt19937,boost::lognormal_distribution<> > createdEngine(exNoiseEngines[i],currentTest);
 		extrinsicNoiseGenerators[i]=createdEngine;
 	}
