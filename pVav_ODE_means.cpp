@@ -105,13 +105,13 @@ int main(int argc, char** argv){
 	exGenerator.seed(generator2());
 
 	vector<boost::mt19937> exNoiseEngines(3);
-	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<> > > extrinsicNoiseGenerators(3);
+	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > > extrinsicNoiseGenerators(3);
 	for(int i=0;i<(int)extrinsicNoiseGenerators.size();i++){
 		exNoiseEngines[i].seed(time(NULL));
 		double scaledMean(log(pow(means[i],2)/sqrt(pow(means[i],2)+pow(inValues[i][i],2))));
 		double scaledSD(sqrt(log(pow(means[i],2)+pow(inValues[i][i],2)/pow(means[i],2))));
 		boost::lognormal_distribution<> currentTest(scaledMean,scaledSD);
-		boost::variate_generator<boost::mt19937,boost::lognormal_distribution<> > createdEngine(exNoiseEngines[i],currentTest);
+		boost::variate_generator<boost::mt19937,boost::lognormal_distribution<double> > createdEngine(exNoiseEngines[i],currentTest);
 		extrinsicNoiseGenerators[i]=createdEngine;
 	}
 	
