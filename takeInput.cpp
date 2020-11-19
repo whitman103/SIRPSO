@@ -11,6 +11,7 @@
 using namespace std;
 
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
+void loadFoundParameters(vector<double>& inParameters, string parameterFile);
 
 int main(int argc, char** argv){
 	vector<double> speciesVector(6);
@@ -19,6 +20,8 @@ int main(int argc, char** argv){
 	vector<double> stoppingTimes={0,100};
 	vector<tuple<double,double> > twoBounds;
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes,twoBounds, "InputFolder//outputOne.txt");
+	loadFoundParameters(initParameters,"D:\\Downloads\\11_17_2020\\DataFolder_ODEMeans_0\\outFoundParameters.txt");
+	stoppingTimes={0,8,32,64,128,256};
 
 	double timeIncrement(0.002);
 
@@ -86,4 +89,13 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 	}
 	return errorOut;
 
+}
+
+void loadFoundParameters(vector<double>& inParameters, string parameterFile){
+	ifstream inFile(parameterFile);
+	for(int i=0;i<(int)inParameters.size();i++){
+		double doubleHold(0);
+		inFile>>doubleHold;
+		inParameters[i]=doubleHold;
+	}
 }

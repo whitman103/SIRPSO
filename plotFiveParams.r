@@ -2,8 +2,8 @@ Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.27/bin/gswin64c.exe")
 library(extrafont)
 library(Cairo)
 graphics.off()
-baseFolder="D:\\Downloads\\10_26_2020\\DataFolder_pVavTests_0\\" 
-precursor="NoDynamicsLater"
+baseFolder="D:\\Downloads\\11_17_2020\\DataFolder_ODEMeans_2\\" 
+precursor="extrinisicNoiseTest"
 
 outNoise=paste(baseFolder,precursor,"Noise.pdf",sep="")
 #pdf(outNoise,onefile=FALSE)
@@ -12,7 +12,7 @@ plot.new()
 par(family="CMU Serif")
 plotParameters=matrix(1:12,nrow=6,ncol=2)
 noiseString=paste(baseFolder,precursor,"_bestParticles.txt",sep="")
-trueString=paste(baseFolder,precursor,"_outRunge_noNoise.txt",sep="")
+trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
 outMeans=numeric(6)
 trueValues=numeric(6)
 inData=read.table(noiseString,header=FALSE)
@@ -32,10 +32,9 @@ for(param in 1:6){
 	else{
 		printLabels=round(seq(xMin,xMax,length.out=5),printAccuracy)
 	}
+	plot(mean(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2,axes=FALSE,ylab="",ylim=c(.8,6.2),xlab="Parameter Values",xlim=c(xMin,xMax))
 	
-	plot(trueData[1,param],param+.12,xlim=c(xMin,xMax),ylim=c(.8,6.2),axes=FALSE,xlab="Parameter Values",ylab="",col='red',cex=2)
 	
-	points(mean(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2)
 	outMeans[param]=mean(inData[2:length(inData[,param]),param])
 	par(cex=.8)
 	printAccuracy=3
@@ -46,17 +45,11 @@ for(param in 1:6){
 	shift=.4
 	polygon(c(xMin,xMin,xMax,xMax), c(param,param+shift,param+shift,param),
     col = rgb(param/10,0,1-param/10,.25), border = NA)
-	if(param==1){
-		text(xMax,param+.25,paste("True Value is: ",formatC(trueValues[param],format='e'),sep=""),pos=2)
-	}
-	else{
-		text(xMax,param+.25,paste("True Value is: ",round(trueValues[param],printAccuracy),sep=""),pos=2)
-	}
 	
 	par(new=TRUE)
 }
-axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=xMin*.7)
-title(main="Nonlinear pVav Response Regime wrt Shp1\nOnly pVav Mean in Cost Function")
+axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=xMin*.8)
+title(main="PSO Results for Experimental pVav Data\n8, 32, 64, 128, 256 Min")
 dev.off()
 embed_fonts(outNoise)
 write.table(outMeans,paste(baseFolder,"outFoundParameters.txt",sep=""),sep=" ",row.names=FALSE,col.names=FALSE)
