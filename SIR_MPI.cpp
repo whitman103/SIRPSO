@@ -419,9 +419,7 @@ void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix,
     inMatrix=interMatrix;
 }
 
-void generateUncorrelatedLNNoise(vector<double>& inSpecies, vector<double>& inMean, vector<double>& variances){
-	
-}
+
 
 vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn){
     vector<double> outRand(inRand.size(),0);
