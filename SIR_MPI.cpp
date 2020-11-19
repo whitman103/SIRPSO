@@ -398,7 +398,6 @@ vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix){
     return choleskyOut;
 }
 
-
 void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix, string dataPath){
     int inSize(0);
     ifstream inData(dataPath+".txt");
@@ -418,6 +417,10 @@ void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix,
     }
     inData.close();
     inMatrix=interMatrix;
+}
+
+void generateUncorrelatedLNNoise(vector<double>& inSpecies, vector<double>& inMean, vector<double>& variances){
+	
 }
 
 vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn){

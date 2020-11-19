@@ -37,14 +37,20 @@ int main(){
 	
 	
 	Particle pVavParticle=Particle(numOfParameters,paramValues,interactionFunctions,scalingSize);
-	pVav_RungeKutta(&pVavParticle,speciesVec,0,100,0.001);
-	
-	for(int i=0;i<(int)speciesVec.size();i++){
-		cout<<speciesVec[i]<<" ";
+
+	ofstream outData(outputFolder+"testData.txt");
+	double timeIncrement(0.05);
+	for(double t=0;t<50;t+=timeIncrement){
+		pVav_RungeKutta(&pVavParticle,speciesVec,0,timeIncrement,0.001);
+		outData<<(t+1)<<" ";
+		for(int i=0;i<(int)speciesVec.size();i++){
+			outData<<speciesVec[i]<<" ";
+		}
+		outData<<endl;
 	}
-	cout<<endl;
+	outData.close();
 	
-	
+	/*
 	
 	Gillespie ReactionObject("pVavCoeffs");
 	
@@ -108,7 +114,7 @@ int main(){
 		outFile.close();
 	}
 	
-	
+	*/
 	return 0;
 }
 

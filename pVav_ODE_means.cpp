@@ -19,6 +19,7 @@
 	boost::mt19937 generator;
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
+#include <boost/random/lognormal_distribution.hpp>
 
 	
 /* Quick functions for portability. */
@@ -50,12 +51,6 @@ int main(int argc, char** argv){
 	string outputFolder="DataFolder_ODEMeans_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
-    boost::normal_distribution<> standardNormal(0,1);
-    boost::mt19937 generator2;
-    generator2.seed(generator());
-    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
-	boost::mt19937 exGenerator;
-	exGenerator.seed(generator2());
 
     string customString("extrinisicNoiseTest_");
     
@@ -96,12 +91,27 @@ int main(int argc, char** argv){
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
 	vector<double> means;
-	/*loadCovariance(means, inValues,"outCov");
-	
-	vector<vector<double> > outDecomp=generateCholesky(inValues);*/
+	loadCovariance(means, inValues,"outCov");
+	//vector<vector<double> > outDecomp=generateCholesky(inValues);
 
 
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
+
+	boost::normal_distribution<> standardNormal(0,1);
+    boost::mt19937 generator2;
+    generator2.seed(generator());
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalGenerator(generator2,standardNormal);
+	boost::mt19937 exGenerator;
+	exGenerator.seed(generator2());
+
+	vector<boost::mt19937> exNoiseEngines(3);
+	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<> > > extrinsicNoiseGenerators(3);
+	for(int i=0;i<(int)extrinsicNoiseGenerators.size();i++){
+		exNoiseEngines[i].seed(time(NULL));
+		boost::lognormal_distribution<> currentTest(means[i],inValues[i][i]);
+		boost::variate_generator<boost::mt19937,boost::lognormal_distribution<> > createdEngine(exNoiseEngines[i],currentTest);
+		extrinsicNoiseGenerators[i]=createdEngine;
+	}
 	
     
 	double timeIncrement(0.002);
@@ -132,12 +142,9 @@ int main(int argc, char** argv){
 				
 				for(int sample=0;sample<numOfSamples;sample++){
 					speciesVector=resetSpecies;
-					/*vector<double> baseNormal(numOfSpecies,0);
-					for(int i=0;i<(int)baseNormal.size();i++){
-						baseNormal[i]=normalGenerator();
-					}
-					baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);
-					transform(baseNormal.begin(),baseNormal.end(),baseNormal.begin(),bind(std::multiplies<double>(),std::placeholders::_1,(double)scalingFactor));*/
+					speciesVector[0]=extrinsicNoiseGenerators[0]();
+					speciesVector[1]=extrinsicNoiseGenerators[1]();
+					speciesVector[4]=extrinsicNoiseGenerators[2]();
 					vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					for(int i=0;i<(int)trueArray.size();i++){
 						for(int j=0;j<(int)trueArray[i].size();j++){
@@ -206,6 +213,9 @@ int main(int argc, char** argv){
 	}
 	
 	generator.seed(taskID);
+	for(int i=0;i<(int)exNoiseEngines.size();i++){
+		exNoiseEngines[i].seed(taskID*nTasks*i);
+	}
 
 	for(int run=0;run<numOfRuns;run++){
 		double globalBestFitness(1e26);
@@ -229,12 +239,10 @@ int main(int argc, char** argv){
 				}
 				else{
 					for(int sample=0;sample<numOfSamples;sample++){
-						/*vector<double> baseNormal(numOfSpecies,0);
-						for(int i=0;i<(int)baseNormal.size();i++){
-							baseNormal[i]=normalGenerator();
-						}
-						baseNormal=transformInit(baseNormal, inValues, speciesVector,&generator);*/
 						speciesVector=resetSpecies;
+						speciesVector[0]=extrinsicNoiseGenerators[0]();
+						speciesVector[1]=extrinsicNoiseGenerators[1]();
+						speciesVector[4]=extrinsicNoiseGenerators[2]();
 						vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 						for(int i=0;i<(int)testArray.size();i++){
 							for(int j=0;j<(int)testArray[i].size();j++){
