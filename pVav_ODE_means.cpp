@@ -81,7 +81,7 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(10);
+	const int numOfIterations(200);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(500);
 
