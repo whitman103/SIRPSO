@@ -81,7 +81,7 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(200);
+	const int numOfIterations(10);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(500);
 
@@ -106,7 +106,7 @@ int main(int argc, char** argv){
 
 	vector<boost::mt19937> exNoiseEngines(3);
 	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > > extrinsicNoiseGenerators;
-	for(int i=0;i<(int)extrinsicNoiseGenerators.size();i++){
+	for(int i=0;i<(int)exNoiseEngines.size();i++){
 		exNoiseEngines[i].seed(time(NULL));
 		double scaledMean(log(pow(means[i],2)/sqrt(pow(means[i],2)+pow(inValues[i][i],2))));
 		double scaledSD(sqrt(log(pow(means[i],2)+pow(inValues[i][i],2)/pow(means[i],2))));
@@ -130,7 +130,7 @@ int main(int argc, char** argv){
 
 	Particle trueParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
 
-	vector<vector<double> > trueArray;
+	vector<vector<double> > trueArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
     vector<vector<vector<int> > > trueDistributions(stoppingTimes.size()-1,vector<vector<int> > (numOfSpecies,vector<int> (numOfRuns,0)));
 
 	switch(solutionStyle){
@@ -235,6 +235,7 @@ int main(int argc, char** argv){
 			{
 				//Initialize
 				vector<vector<double> > testArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
+				vector<vector<double> > resetTestArray=testArray;
 				speciesVector=resetSpecies;
 				if(!exNoise){
 					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
@@ -277,22 +278,20 @@ int main(int argc, char** argv){
 				//Iterate
 				for(int iteration=0;iteration<numOfIterations;iteration++){
 					speciesVector=resetSpecies;
+					testArray=resetTestArray;
 					if(!exNoise){
 						testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					}
 					else{
-						const int numSamples(1);
-						for(int sample=0;sample<numSamples;sample++){
-							/*vector<double> baseNormal(numOfSpecies,0);
-							for(int i=0;i<(int)baseNormal.size();i++){
-								baseNormal[i]=normalGenerator();
-							}
-							baseNormal=transformInit(baseNormal, inValues, speciesVector, &generator);*/
+						for(int sample=0;sample<numOfSamples;sample++){
 							speciesVector=resetSpecies;
+							speciesVector[0]=extrinsicNoiseGenerators[0]();
+							speciesVector[1]=extrinsicNoiseGenerators[1]();
+							speciesVector[4]=extrinsicNoiseGenerators[2]();
 							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 							for(int i=0;i<(int)testArray.size();i++){
 								for(int j=0;j<(int)testArray[i].size();j++){
-									testArray[i][j]+=noiseData[i][j]/(double)numSamples;
+									testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
 								}
 							}
 						}
@@ -520,8 +519,8 @@ vector<tuple<double,double> > pVavSetBounds(vector<double>& inSpeciesCounts,vect
 	outBounds[2]=make_tuple(k1Min,k1Max);
 
 	double k3Min(0), k3Max(0);
-	k3Max=overallRateLimit/(inSpeciesCounts[3]*inSpeciesCounts[4]);
-	k3Min=(1./maxTime)/(inSpeciesCounts[3]*inSpeciesCounts[4]);
+	k3Max=overallRateLimit/(inSpeciesCounts[1]*inSpeciesCounts[4]);
+	k3Min=(1./maxTime)/(inSpeciesCounts[1]*inSpeciesCounts[4]);
 	outBounds[3]=make_tuple(k3Min,k3Max);
 
 	double k4Min(0), k4Max(0);

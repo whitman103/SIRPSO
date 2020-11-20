@@ -14,3 +14,4 @@ SIR_MPI.o
 test.txt
 *.pdf
 *.r
+DataFolder_ODEMeans_0/extrinisicNoiseTest_bestParticles.txt
