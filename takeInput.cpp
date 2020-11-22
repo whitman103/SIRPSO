@@ -12,6 +12,7 @@ using namespace std;
 
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
 void loadFoundParameters(vector<double>& inParameters, string parameterFile);
+vector<tuple<double,double> > pVavSetBounds(vector<double>& inSpeciesCounts,vector<double>& inTimes);
 
 int main(int argc, char** argv){
 	vector<double> speciesVector(6);
@@ -21,6 +22,10 @@ int main(int argc, char** argv){
 	vector<tuple<double,double> > twoBounds;
 	int errorFlag=loadPvavInputs(speciesVector,initParameters,stoppingTimes,twoBounds, "InputFolder//outputOne.txt");
 	loadFoundParameters(initParameters,"D:\\Downloads\\11_17_2020\\DataFolder_ODEMeans_0\\outFoundParameters.txt");
+	vector<tuple<double,double> > outTest(pVavSetBounds(speciesVector,stoppingTimes));
+
+	/*
+
 	stoppingTimes={0,8,32,64,128,256};
 
 	double timeIncrement(0.002);
@@ -43,7 +48,7 @@ int main(int argc, char** argv){
 		}
 		cout<<endl;
 	}
-
+	*/
 	
 
 	return 0;
@@ -98,4 +103,42 @@ void loadFoundParameters(vector<double>& inParameters, string parameterFile){
 		inFile>>doubleHold;
 		inParameters[i]=doubleHold;
 	}
+}
+
+vector<tuple<double,double> > pVavSetBounds(vector<double>& inSpeciesCounts,vector<double>& inTimes){
+	double overallRateLimit(600); //10 per second
+	vector<tuple<double,double> > outBounds(6);
+	double maxTime(inTimes[inTimes.size()-1]);
+	double k0Min(0), k0Max(0);
+	k0Max=overallRateLimit/(inSpeciesCounts[0]*inSpeciesCounts[1]);
+	k0Min=(1./maxTime)/(inSpeciesCounts[0]*inSpeciesCounts[1]);
+	outBounds[0]=make_tuple(k0Min,k0Max);
+	
+	double k1Min(0), k1Max(0);
+	double limitSykVav((min(inSpeciesCounts[0],inSpeciesCounts[1])));
+	k1Max=overallRateLimit/limitSykVav;
+	k1Min=(1./maxTime)/(limitSykVav);
+	outBounds[1]=make_tuple(k1Min,k1Max);
+
+	outBounds[2]=make_tuple(k1Min,k1Max);
+
+	double k3Min(0), k3Max(0);
+	k3Max=overallRateLimit/(inSpeciesCounts[1]*inSpeciesCounts[4]);
+	k3Min=(1./maxTime)/(inSpeciesCounts[1]*inSpeciesCounts[4]);
+	outBounds[3]=make_tuple(k3Min,k3Max);
+
+	double k4Min(0), k4Max(0);
+	double limitShpVav(min(inSpeciesCounts[1],inSpeciesCounts[4]));
+	k4Max=overallRateLimit/limitShpVav;
+	k4Min=(1./maxTime)/limitShpVav;
+	outBounds[4]=make_tuple(k4Min,k4Max);
+
+	outBounds[5]=make_tuple(k4Min,k4Max);
+
+	for(int i=0;i<(int)outBounds.size();i++){
+		auto[x,y]=outBounds[i];
+		cout<<x<<" "<<y<<endl;
+	}
+
+	return outBounds;
 }

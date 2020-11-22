@@ -48,14 +48,14 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_ODEMeans_"+string(argv[3]);
+	string outputFolder="DataFolder_ODEMeansDeter_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
 
-    string customString("extrinisicNoiseTest_");
+    string customString("noExtrinsicNoise_");
     
 
-    bool exNoise(true);
+    bool exNoise(false);
 	//T, I, V, R
 	const int numOfSpecies(6);
 	
@@ -83,7 +83,7 @@ int main(int argc, char** argv){
 	//Number of PSO iterations
 	const int numOfIterations(200);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(500);
+	const int numOfSamples(1);
 
 	//Number of Particle sets to run
 	const int numOfRuns(200);

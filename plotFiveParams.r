@@ -2,7 +2,7 @@ Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.27/bin/gswin64c.exe")
 library(extrafont)
 library(Cairo)
 graphics.off()
-baseFolder="D:\\Downloads\\11_17_2020\\DataFolder_ODEMeans_2\\" 
+baseFolder="D:\\Downloads\\11_21_2020\\DataFolder_ODEMeans_2\\" 
 precursor="extrinisicNoiseTest"
 
 outNoise=paste(baseFolder,precursor,"Noise.pdf",sep="")
@@ -20,20 +20,20 @@ inData=inData[,2:ncol(inData)]
 trueData=read.table(trueString,header=FALSE)
 par(family="CMU Serif")
 for(param in 1:6){
-	xMin=(min(inData[,param]))*(.9)
+	trueValues[param]=trueData[1,param]
+	xMin=(min(inData[,param],trueValues[param]))*(.9)
 	plotParameters[param,1]=xMin
-	xMax=max(inData[,param])*1.1
+	xMax=max(inData[,param],trueValues[param])*1.1
 	plotParameters[param,2]=xMax
 	roundNumber=3
-	trueValues[param]=trueData[1,param]
 	if(param==1){
 		printLabels=formatC(seq(xMin,xMax,length.out=5),format="e")
 	}
 	else{
 		printLabels=round(seq(xMin,xMax,length.out=5),printAccuracy)
 	}
-	plot(mean(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2,axes=FALSE,ylab="",ylim=c(.8,6.2),xlab="Parameter Values",xlim=c(xMin,xMax))
-	
+	plot(median(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2,axes=FALSE,ylab="",ylim=c(.8,6.2),xlab="Parameter Values",xlim=c(xMin,xMax))
+	points(trueValues[param],param+.12,col='red',cex=2)
 	
 	outMeans[param]=mean(inData[2:length(inData[,param]),param])
 	par(cex=.8)
@@ -48,7 +48,7 @@ for(param in 1:6){
 	
 	par(new=TRUE)
 }
-axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=xMin*.8)
+axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=-1)
 title(main="PSO Results for Experimental pVav Data\n8, 32, 64, 128, 256 Min")
 dev.off()
 embed_fonts(outNoise)
