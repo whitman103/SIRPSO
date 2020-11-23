@@ -48,11 +48,11 @@ int main(int argc, char** argv){
     /*string localPath=std::filesystem::current_path();
 	string outputFolder=localPath+"\\DataFolder";
     std::filesystem::create_directory(outputFolder);*/
-	string outputFolder="DataFolder_ODEMeansDeter_"+string(argv[3]);
+	string outputFolder="DataFolder_ODEMeans_"+string(argv[3]);
 	mkdir(outputFolder.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     outputFolder+="//";
 
-    string customString("noExtrinsicNoise_");
+    string customString("extrinsicNoise_");
     
 
     bool exNoise(true);
