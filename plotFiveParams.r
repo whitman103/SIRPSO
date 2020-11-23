@@ -3,9 +3,9 @@ library(extrafont)
 library(Cairo)
 graphics.off()
 
-deterSwitch=TRUE
+deterSwitch=FALSE
 if(deterSwitch){
-	baseFolder="D:\\Downloads\\11_23_2020\\DataFolder_ODEMeansDeter_1\\" 
+	baseFolder="D:\\Downloads\\11_23_2020\\DataFolder_ODEMeansDeter_2\\" 
 	precursor="noExtrinsicNoise"
 	trueString=paste(baseFolder,precursor,"_outRunge_noNoise.txt",sep="")
 }
@@ -32,9 +32,9 @@ trueData=read.table(trueString,header=FALSE)
 par(family="CMU Serif")
 for(param in 1:6){
 	trueValues[param]=trueData[1,param]
-	xMin=(min(inData[,param],trueValues[param]))*(.9)
+	xMin=(min(median(inData[,param]),trueValues[param]))*(.9)
 	plotParameters[param,1]=xMin
-	xMax=max(inData[,param],trueValues[param])*1.1
+	xMax=max(median(inData[,param]),trueValues[param])*1.1
 	plotParameters[param,2]=xMax
 	roundNumber=3
 	if(param==1){
@@ -59,8 +59,8 @@ for(param in 1:6){
 	
 	par(new=TRUE)
 }
-axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=0.015)
-title(main="PSO Results, No Extrinsic Noise\nTrue Parameters Within Search Region")
+axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=0.012)
+title(main="PSO Results, Extrinsic Noise Included\nTrue Parameters Outside Search Region")
 dev.off()
 embed_fonts(outNoise)
 write.table(outMeans,paste(baseFolder,"outFoundParameters.txt",sep=""),sep=" ",row.names=FALSE,col.names=FALSE)

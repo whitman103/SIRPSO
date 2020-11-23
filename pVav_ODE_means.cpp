@@ -108,12 +108,18 @@ int main(int argc, char** argv){
 	vector<boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > > extrinsicNoiseGenerators;
 	for(int i=0;i<(int)exNoiseEngines.size();i++){
 		exNoiseEngines[i].seed(time(NULL));
-		double scaledMean(log(pow(means[i],2)/sqrt(pow(means[i],2)+pow(inValues[i][i],2))));
-		double scaledSD(sqrt(log(pow(means[i],2)+pow(inValues[i][i],2)/pow(means[i],2))));
+		double scaledMean(means[i]);
+		double scaledSD(inValues[i][i]);
 		boost::lognormal_distribution<> currentTest(scaledMean,scaledSD);
 		boost::variate_generator<boost::mt19937,boost::lognormal_distribution<double> > createdEngine(exNoiseEngines[i],currentTest);
 		extrinsicNoiseGenerators.push_back(createdEngine);
 	}
+
+	ofstream fuckOff("fuckoff.txt");
+	for(int i=0;i<100;i++){
+		fuckOff<<extrinsicNoiseGenerators[0]()<<" ";
+	}
+	fuckOff.close();
 	
     
 	double timeIncrement(0.002);
