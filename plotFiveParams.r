@@ -2,17 +2,28 @@ Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.27/bin/gswin64c.exe")
 library(extrafont)
 library(Cairo)
 graphics.off()
-baseFolder="D:\\Downloads\\11_21_2020\\DataFolder_ODEMeans_2\\" 
-precursor="extrinisicNoiseTest"
+
+deterSwitch=TRUE
+if(deterSwitch){
+	baseFolder="D:\\Downloads\\11_23_2020\\DataFolder_ODEMeansDeter_1\\" 
+	precursor="noExtrinsicNoise"
+	trueString=paste(baseFolder,precursor,"_outRunge_noNoise.txt",sep="")
+}
+if(!deterSwitch){
+	baseFolder="D:\\Downloads\\11_21_2020\\DataFolder_ODEMeans_2\\" 
+	precursor="extrinsicNoiseTest"
+	trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
+}
+
+
 
 outNoise=paste(baseFolder,precursor,"Noise.pdf",sep="")
 #pdf(outNoise,onefile=FALSE)
 CairoPDF(outNoise,6.5,7.5)
-plot.new()
 par(family="CMU Serif")
 plotParameters=matrix(1:12,nrow=6,ncol=2)
 noiseString=paste(baseFolder,precursor,"_bestParticles.txt",sep="")
-trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
+
 outMeans=numeric(6)
 trueValues=numeric(6)
 inData=read.table(noiseString,header=FALSE)
@@ -48,8 +59,8 @@ for(param in 1:6){
 	
 	par(new=TRUE)
 }
-axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=-1)
-title(main="PSO Results for Experimental pVav Data\n8, 32, 64, 128, 256 Min")
+axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=0.015)
+title(main="PSO Results, No Extrinsic Noise\nTrue Parameters Within Search Region")
 dev.off()
 embed_fonts(outNoise)
 write.table(outMeans,paste(baseFolder,"outFoundParameters.txt",sep=""),sep=" ",row.names=FALSE,col.names=FALSE)

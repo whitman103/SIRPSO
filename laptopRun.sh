@@ -1,0 +1,1 @@
+mpirun -np 3 ./pVav_ODE_means.exe "3" "InputFolder//outputOne.txt" "1"
