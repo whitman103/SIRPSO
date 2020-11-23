@@ -55,7 +55,7 @@ int main(int argc, char** argv){
     string customString("noExtrinsicNoise_");
     
 
-    bool exNoise(false);
+    bool exNoise(true);
 	//T, I, V, R
 	const int numOfSpecies(6);
 	
@@ -83,7 +83,7 @@ int main(int argc, char** argv){
 	//Number of PSO iterations
 	const int numOfIterations(200);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(1);
+	const int numOfSamples(200);
 
 	//Number of Particle sets to run
 	const int numOfRuns(200);
