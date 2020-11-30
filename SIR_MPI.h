@@ -99,6 +99,10 @@ double fourthInteraction(Particle* currentParticle, vector<double>& species);
 
 void rungeKuttaUpdate(Particle* currentParticle, vector<double>& speciesVec, double currentTime, double stoppingTime, double deltaT);
 
+vector<double> calculateFitnessVector(vector<vector<vector<double> > >& inDistributions);
+
+double fitnessFunction(vector<double>& inTrueFlattened, vector<vector<vector<double> > >& testIn);
+
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean);
 
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> >& testVar);

@@ -364,6 +364,58 @@ double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> 
     return interHold;
 }
 
+vector<double> calculateFitnessVector(vector<vector<vector<double> > >& inDistributions){
+	int sampleNum(inDistributions.size());
+	int timeNum(inDistributions[0].size());
+	int speciesNum(inDistributions[0][0].size());
+	vector<vector<double> > means(timeNum,vector<double>(speciesNum,0));
+	for(int i=0;i<(int)inDistributions.size();i++){
+		for(int j=0;j<(int)inDistributions[i].size();j++){
+			for(int k=0;k<(int)inDistributions[i][j].size();k++){
+				means[j][k]+=inDistributions[i][j][k]/(double)inDistributions.size();
+			}
+		}
+	}
+	vector<vector<vector<double> > > vars(timeNum,vector<vector<double> > (speciesNum,vector<double>(speciesNum,0)));
+	for(int i=0;i<sampleNum;i++){
+		for(int l=0;l<timeNum;l++){
+			for(int j=0;j<speciesNum;j++){
+				for(int k=j;k<speciesNum;k++){
+					vars[l][j][k]+=(inDistributions[i][l][j]-means[l][j])*(inDistributions[i][l][k]-means[l][k])/(double)sampleNum;
+				}
+			}
+		}
+	}
+	vector<double> outFlatten;
+	for(int i=0;i<(int)means.size();i++){
+		for(int j=0;j<(int)means[i].size();j++){
+			outFlatten.push_back(means[i][j]);
+		}
+	}
+	for(int i=0;i<(int)vars.size();i++){
+		for(int j=0;j<speciesNum;j++){
+			for(int k=j;k<speciesNum;k++){
+				outFlatten.push_back(vars[i][j][k]);
+			}
+		}
+	}
+	return outFlatten;
+}
+
+double fitnessFunction(vector<double>& inTrueFlattened, vector<vector<vector<double> > >& testIn){
+	vector<double> testFlattened=calculateFitnessVector(testIn);
+	double outHold(0);
+	for(int i=0;i<(int)inTrueFlattened.size();i++){
+		if(i>testIn[0][0].size()){
+			outHold+=pow(inTrueFlattened[i]-testFlattened[i],2)/(double)testIn[0][0].size();
+		}
+		else{
+			outHold+=pow(inTrueFlattened[i]-testFlattened[i],2);
+		}
+	}
+	return outHold;
+}
+
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> >& testVar){
     double interHold(0);
     for(int i=0;i<(int)trueMean.size();i++){

@@ -56,6 +56,7 @@ int main(int argc, char** argv){
     
 
     bool exNoise(true);
+	bool variancesIncluded(true);
 	//T, I, V, R
 	const int numOfSpecies(6);
 	
@@ -115,11 +116,7 @@ int main(int argc, char** argv){
 		extrinsicNoiseGenerators.push_back(createdEngine);
 	}
 
-	ofstream fuckOff("fuckoff.txt");
-	for(int i=0;i<100;i++){
-		fuckOff<<extrinsicNoiseGenerators[0]()<<" ";
-	}
-	fuckOff.close();
+	
 	
     
 	double timeIncrement(0.002);
@@ -138,6 +135,7 @@ int main(int argc, char** argv){
 
 	vector<vector<double> > trueArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
     vector<vector<vector<int> > > trueDistributions(stoppingTimes.size()-1,vector<vector<int> > (numOfSpecies,vector<int> (numOfRuns,0)));
+	vector<vector<vector<double> > > trueFullDistribution(numOfSamples);
 
 	switch(solutionStyle){
 		case 0:
@@ -147,19 +145,31 @@ int main(int argc, char** argv){
 				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 			else{
-				
-				for(int sample=0;sample<numOfSamples;sample++){
-					speciesVector=resetSpecies;
-					speciesVector[0]=extrinsicNoiseGenerators[0]();
-					speciesVector[1]=extrinsicNoiseGenerators[1]();
-					speciesVector[4]=extrinsicNoiseGenerators[2]();
-					vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-					for(int i=0;i<(int)trueArray.size();i++){
-						for(int j=0;j<(int)trueArray[i].size();j++){
-							trueArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+				if(!variancesIncluded){
+					for(int sample=0;sample<numOfSamples;sample++){
+						speciesVector=resetSpecies;
+						speciesVector[0]=extrinsicNoiseGenerators[0]();
+						speciesVector[1]=extrinsicNoiseGenerators[1]();
+						speciesVector[4]=extrinsicNoiseGenerators[2]();
+						vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+						for(int i=0;i<(int)trueArray.size();i++){
+							for(int j=0;j<(int)trueArray[i].size();j++){
+								trueArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+							}
 						}
 					}
 				}
+				else{
+					for(int sample=0;sample<numOfSamples;sample++){
+						speciesVector=resetSpecies;
+						speciesVector[0]=extrinsicNoiseGenerators[0]();
+						speciesVector[1]=extrinsicNoiseGenerators[1]();
+						speciesVector[4]=extrinsicNoiseGenerators[2]();
+						trueFullDistribution[sample]=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+						
+					}
+				}
+				
 			}
 		}
 		break;
@@ -183,6 +193,13 @@ int main(int argc, char** argv){
 		default:
 		return 0;
 	}
+	vector<double> trueFlattened;
+	if(variancesIncluded){
+		trueFlattened=calculateFitnessVector(trueFullDistribution);
+	}
+	
+
+	
 	
 	double inDelta(10);
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
@@ -241,27 +258,45 @@ int main(int argc, char** argv){
 			{
 				//Initialize
 				vector<vector<double> > testArray(stoppingTimes.size()-1,vector<double>(numOfSpecies,0));
+				vector<vector<vector<double> > > testFullDistributions(numOfSamples);
 				vector<vector<double> > resetTestArray=testArray;
 				speciesVector=resetSpecies;
 				if(!exNoise){
 					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 				}
 				else{
-					for(int sample=0;sample<numOfSamples;sample++){
-						speciesVector=resetSpecies;
-						speciesVector[0]=extrinsicNoiseGenerators[0]();
-						speciesVector[1]=extrinsicNoiseGenerators[1]();
-						speciesVector[4]=extrinsicNoiseGenerators[2]();
-						vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-						for(int i=0;i<(int)testArray.size();i++){
-							for(int j=0;j<(int)testArray[i].size();j++){
-								testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+					if(!variancesIncluded){
+						for(int sample=0;sample<numOfSamples;sample++){
+							speciesVector=resetSpecies;
+							speciesVector[0]=extrinsicNoiseGenerators[0]();
+							speciesVector[1]=extrinsicNoiseGenerators[1]();
+							speciesVector[4]=extrinsicNoiseGenerators[2]();
+							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+							for(int i=0;i<(int)testArray.size();i++){
+								for(int j=0;j<(int)testArray[i].size();j++){
+									testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+								}
 							}
 						}
 					}
+					else{
+						for(int sample=0;sample<numOfSamples;sample++){
+							speciesVector=resetSpecies;
+							speciesVector[0]=extrinsicNoiseGenerators[0]();
+							speciesVector[1]=extrinsicNoiseGenerators[1]();
+							speciesVector[4]=extrinsicNoiseGenerators[2]();
+							testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+						}
+					}
+					
 				}
 
-				threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				if(!variancesIncluded){
+					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+				}
+				else{
+					threadParticle.currentFitness=fitnessFunction(trueFlattened,testFullDistributions);
+				}
 				threadParticle.bestFitness=threadParticle.currentFitness;
 				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
@@ -289,21 +324,38 @@ int main(int argc, char** argv){
 						testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					}
 					else{
-						for(int sample=0;sample<numOfSamples;sample++){
-							speciesVector=resetSpecies;
-							speciesVector[0]=extrinsicNoiseGenerators[0]();
-							speciesVector[1]=extrinsicNoiseGenerators[1]();
-							speciesVector[4]=extrinsicNoiseGenerators[2]();
-							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-							for(int i=0;i<(int)testArray.size();i++){
-								for(int j=0;j<(int)testArray[i].size();j++){
-									testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+						if(!variancesIncluded){
+							for(int sample=0;sample<numOfSamples;sample++){
+								speciesVector=resetSpecies;
+								speciesVector[0]=extrinsicNoiseGenerators[0]();
+								speciesVector[1]=extrinsicNoiseGenerators[1]();
+								speciesVector[4]=extrinsicNoiseGenerators[2]();
+								vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
+								for(int i=0;i<(int)testArray.size();i++){
+									for(int j=0;j<(int)testArray[i].size();j++){
+										testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
+									}
 								}
+							}
+						}
+						else{
+							for(int sample=0;sample<numOfSamples;sample++){
+								speciesVector=resetSpecies;
+								speciesVector[0]=extrinsicNoiseGenerators[0]();
+								speciesVector[1]=extrinsicNoiseGenerators[1]();
+								speciesVector[4]=extrinsicNoiseGenerators[2]();
+								testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 							}
 						}
 					}
 					
-					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+					if(!variancesIncluded){
+						threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
+					}
+					else{
+						threadParticle.currentFitness=fitnessFunction(trueFlattened,testFullDistributions);
+					}
+					
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
 						threadParticle.bestFitness=threadParticle.currentFitness;
