@@ -29,7 +29,7 @@ int main(){
 	
 	const int numOfParameters(6);
 	const int numOfSpecies(6);
-	vector<double> paramValues={0.008,0.01,0.1,0.13904,0.005,0.07};
+	vector<double> paramValues={2e-4,0.1,0.1,1e-4,2,0.07};
 	vector<double> speciesVec={600,200,0,0,60,0};
 	vector<int> intSpeciesReset(speciesVec.begin(),speciesVec.end());
 	vector<double (*)(Particle*, vector<double>&)> interactionFunctions={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
