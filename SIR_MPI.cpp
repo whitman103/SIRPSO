@@ -407,7 +407,7 @@ double fitnessFunction(vector<double>& inTrueFlattened, vector<vector<vector<dou
 	double outHold(0);
 	for(int i=0;i<(int)inTrueFlattened.size();i++){
 		if(i>testIn[0][0].size()){
-			outHold+=pow(inTrueFlattened[i]-testFlattened[i],2)/(double)testIn[0][0].size();
+			outHold+=pow(inTrueFlattened[i]-testFlattened[i],2)/(double)pow(testIn[0][0].size(),2);
 		}
 		else{
 			outHold+=pow(inTrueFlattened[i]-testFlattened[i],2);
