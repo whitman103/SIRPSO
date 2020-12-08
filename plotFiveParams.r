@@ -3,19 +3,35 @@ library(extrafont)
 library(Cairo)
 graphics.off()
 
+
+
 deterSwitch=FALSE
 if(deterSwitch){
-	baseFolder="D:\\Downloads\\11_23_2020\\DataFolder_ODEMeansDeter_2\\" 
+	baseFolder="D:\\Downloads\\12_02_2020\\DataFolder_ODEMeansDeter_2\\" 
 	precursor="noExtrinsicNoise"
 	trueString=paste(baseFolder,precursor,"_outRunge_noNoise.txt",sep="")
 }
 if(!deterSwitch){
-	baseFolder="D:\\Downloads\\11_21_2020\\DataFolder_ODEMeans_2\\" 
-	precursor="extrinsicNoiseTest"
+	baseFolder="D:\\Downloads\\12_04_2020\\DataFolder_ODEMeansOnly_1\\" 
+	precursor="extrinsicNoise"
 	trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
 }
 
+bounds=c(1.38e-6,5e-3,8.3e-4,3,8.3e-4,3,1.38e-5,5e-2,2.7e-3,10,2.7e-3,10)
 
+noiseString=paste(baseFolder,precursor,"_bestParticles.txt",sep="")
+trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
+inData=read.table(noiseString,header=FALSE)
+trueParameters=read.table(trueString,header=FALSE)
+colorVector=colormap()
+minFitness=min(inData[,1])
+maxFitness=max(inData[,1])
+
+
+
+plot(inData[,2],rep(c(trueParameters[1]),times=length(inData[,1])),col=plotColors,pch=2)
+
+points(inData[,2],rep(c(trueParameters[1]*1.1),times=length(inData[,1])),col=c(0,1))
 
 outNoise=paste(baseFolder,precursor,"Noise.pdf",sep="")
 #pdf(outNoise,onefile=FALSE)
@@ -35,32 +51,40 @@ for(param in 1:6){
 	xMin=(min(median(inData[,param]),trueValues[param]))*(.9)
 	plotParameters[param,1]=xMin
 	xMax=max(median(inData[,param]),trueValues[param])*1.1
+	xMin=bounds[2*param-1]
+	xMax=bounds[2*param]
 	plotParameters[param,2]=xMax
 	roundNumber=3
-	if(param==1){
-		printLabels=formatC(seq(xMin,xMax,length.out=5),format="e")
+	plotColors=numeric(length(inData[,1]))
+	for(i in 1:length(inData[,1])){
+		plotColors[i]=colorVector[floor(length(colorVector)*inData[i,1]/(maxFitness-minFitness))+1]
+	}
+
+	if(param==1||param==4){
+		printLabels=formatC(xMin*10^((0:5)/5*log10(xMax/xMin)),format="e",digits=3)
 	}
 	else{
-		printLabels=round(seq(xMin,xMax,length.out=5),printAccuracy)
+		printLabels=round(xMin*10^((0:5)/5*log10(xMax/xMin)),printAccuracy)
 	}
-	plot(median(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2,axes=FALSE,ylab="",ylim=c(.8,6.2),xlab="Parameter Values",xlim=c(xMin,xMax))
+	plot(median(inData[2:length(inData[,param]),param]),param+.12,col='black',cex=2,axes=FALSE,ylab="",ylim=c(.8,6.2),xlab="Parameter Values",xlim=c(xMin,xMax),log="x")
 	points(trueValues[param],param+.12,col='red',cex=2)
 	
 	outMeans[param]=mean(inData[2:length(inData[,param]),param])
 	par(cex=.8)
 	printAccuracy=3
-	axis(pos=(param-.12),side=1,at=round(seq(xMin,xMax,length.out=5),5),labels=printLabels)
+	labelPoints=xMin*10^((0:5)/5*log10(xMax/xMin))
+	axis(pos=(param-.12),side=1,at=labelPoints,labels=printLabels)
 	par(cex=1)
 	
-	points(inData[2:length(inData[,param]),param],replicate(length(inData[,param])-1,param),col='blue')
+	points(inData[2:length(inData[,param]),param],replicate(length(inData[,param])-1,param),col=colorVector)
 	shift=.4
 	polygon(c(xMin,xMin,xMax,xMax), c(param,param+shift,param+shift,param),
     col = rgb(param/10,0,1-param/10,.25), border = NA)
 	
 	par(new=TRUE)
 }
-axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=0.012)
-title(main="PSO Results, Extrinsic Noise Included\nTrue Parameters Outside Search Region")
+axis(side=2, labels=c("k0","k1","k2","k3","k4","k5"),at=c(1:6),pos=0.0015)
+title(main="PSO Results, Extrinsic Noise Included\nMeans Used Only")
 dev.off()
 embed_fonts(outNoise)
 write.table(outMeans,paste(baseFolder,"outFoundParameters.txt",sep=""),sep=" ",row.names=FALSE,col.names=FALSE)

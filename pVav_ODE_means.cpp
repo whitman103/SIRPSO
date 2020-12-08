@@ -82,12 +82,12 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(200);
+	const int numOfIterations(1000);
 	//Number of Gillespie samples to use for distributions
-	const int numOfSamples(200);
+	const int numOfSamples(2500);
 
 	//Number of Particle sets to run
-	const int numOfRuns(200);
+	const int numOfRuns(100);
 
 	//Generates cholesky matrix to produce lognormal distributions
 	vector<vector<double> > inValues;
