@@ -1,13 +1,14 @@
 {
     "files.associations": {
-        "functional": "cpp",
-        "xstddef": "cpp",
-        "algorithm": "cpp",
-        "iosfwd": "cpp",
-        "vector": "cpp",
-        "tuple": "cpp",
-        "xstring": "cpp",
-        "cmath": "cpp",
-        "ostream": "cpp"
-    }
+		"functional": "cpp",
+		"xstddef": "cpp",
+		"algorithm": "cpp",
+		"iosfwd": "cpp",
+		"vector": "cpp",
+		"tuple": "cpp",
+		"xstring": "cpp",
+		"cmath": "cpp",
+		"ostream": "cpp",
+		"*.tcc": "cpp"
+	}
 }

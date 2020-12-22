@@ -56,6 +56,7 @@ int main(int argc, char** argv){
     
 
     bool exNoise(true);
+	bool resetParameter(true);
 	bool variancesIncluded(true);
 	//T, I, V, R
 	const int numOfSpecies(6);
@@ -94,7 +95,14 @@ int main(int argc, char** argv){
 	vector<double> means;
 	loadCovariance(means, inValues,"outCov");
 	//vector<vector<double> > outDecomp=generateCholesky(inValues);
-
+	vector<double> parameterResetValues(initParameters.size(),0);
+	if(resetParameter){
+		ifstream readIn("InputFolder//start"+string(argv[3])+".txt");
+		for(int i=0;i<(int)initParameters.size();i++){
+			readIn>>parameterResetValues[i];
+		}
+		readIn.close();
+	}
 
 	vector<double (*)(Particle*, vector<double>&)> interactionFuncts={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
 
@@ -247,10 +255,19 @@ int main(int argc, char** argv){
 
 		FuzzyTree fuzzyStruct(FuzzyStructure[taskID]);
 		Particle threadParticle=Particle(numOfParameters,initParameters,twoBounds,interactionFuncts,scalingFactor);
-		for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
-			auto[lowerBound,upperBound]=twoBounds[i];
-			threadParticle.currentSolution[i]=pow(10,randPull()*log10(upperBound/lowerBound))*lowerBound;
+		if(!resetParameter){
+			for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+				auto[lowerBound,upperBound]=twoBounds[i];
+				threadParticle.currentSolution[i]=pow(10,randPull()*log10(upperBound/lowerBound))*lowerBound;
+			}
 		}
+		else{
+			for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
+				double lowerBound(parameterResetValues[i]/2.), upperBound(parameterResetValues[i]*2.);
+				threadParticle.currentSolution[i]=pow(10,randPull()*log10(upperBound/lowerBound))*lowerBound;
+			}
+		}
+		
 		
         vector<vector<vector<int> > > testDistributions;
 		switch(solutionStyle){
