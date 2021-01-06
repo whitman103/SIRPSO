@@ -3,4 +3,3 @@
 #include <fstream>
 
 
-void compareFitnessMethods();

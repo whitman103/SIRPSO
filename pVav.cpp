@@ -29,7 +29,7 @@ int main(){
 	
 	const int numOfParameters(6);
 	const int numOfSpecies(6);
-	vector<double> paramValues={0.000008,0.1,1.0,0.0013904,0.05,0.07};
+	vector<double> paramValues={0.003,0.01,0.1,0.0013904,0.2,0.07};
 	vector<double> speciesVec={600,200,0,0,60,0};
 	vector<int> intSpeciesReset(speciesVec.begin(),speciesVec.end());
 	vector<double (*)(Particle*, vector<double>&)> interactionFunctions={dSyk,dVav,dSV,dpVav,dSHP1,dSHP1Vav};
@@ -39,8 +39,8 @@ int main(){
 	Particle pVavParticle=Particle(numOfParameters,paramValues,interactionFunctions,scalingSize);
 
 	ofstream outData(outputFolder+"testData.txt");
-	double timeIncrement(0.05);
-	for(double t=0;t<50;t+=timeIncrement){
+	double timeIncrement(0.001);
+	for(double t=0;t<2;t+=timeIncrement){
 		pVav_RungeKutta(&pVavParticle,speciesVec,0,timeIncrement,0.001);
 		outData<<(t+1)<<" ";
 		for(int i=0;i<(int)speciesVec.size();i++){
