@@ -107,6 +107,14 @@ double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> 
 
 double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> >& testMean, vector<vector<double> >& trueVar, vector<vector<double> >& testVar);
 
+double calculateMoment(vector<double>& inVector, double order);
+
+vector<double> generateMahalanVector(vector<vector<double> >& inData);
+
+vector<vector<double> > swapSampleIndices(vector<vector<vector<double> > >& inData);
+
+double mahalanFitness(vector<double>& inTrueFlattened,vector<vector<double> >& testIn, vector<vector<double> >& metricValues);
+
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix);
 
 void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix, string dataPath);

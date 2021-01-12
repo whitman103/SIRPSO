@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <numeric>
 #include <functional>
 #include <boost/random/mersenne_twister.hpp>
 using namespace std;
@@ -45,7 +46,6 @@ FuzzyTree::FuzzyTree(double inDelta){
 	L=LMap["Medium"];
 	U=UMap["Medium"];
 };
-
 
 FuzzyTree::~FuzzyTree(){
 };
@@ -426,6 +426,43 @@ double fitnessFunction(vector<vector<double> >& trueMean, vector<vector<double> 
     return interHold;
 }
 
+double calculateMoment(vector<double>& inVector, double order){
+	double outValue(0);
+	return accumulate(inVector.begin(),inVector.end(),outValue,[&order](double x,double y){return x+pow(y,order);})/(double)inVector.size();
+}
+
+vector<double> generateMahalanVector(vector<vector<double> >& inData){
+	int numSpecies(inData.size());
+	int fillIndex(0);
+	vector<double> trueMoments(2*numSpecies+(numSpecies-1)*numSpecies/2);
+	for(int i=0;i<numSpecies;i++){
+		trueMoments[fillIndex]=calculateMoment(inData[i],1);
+		fillIndex++;
+	}
+	for(int i=0;i<numSpecies;i++){
+		for(int j=i;j<numSpecies;j++){
+			double sumHold(0);
+			for(int k=0;k<(int)inData[i].size();k++){
+				sumHold+=inData[i][k]*inData[j][k];
+			}
+			trueMoments[fillIndex]=sumHold/(double)inData[i].size();
+			fillIndex++;
+		}
+	}
+	return trueMoments;
+}
+
+double mahalanFitness(vector<double>& trueMahalan, vector<vector<double> >& testIn, vector<vector<double> >& metricValues){
+	vector<double> testMahalan=generateMahalanVector(testIn);
+	double outHold(0);
+	for(int i=0;i<(int)trueMahalan.size();i++){
+		for(int j=0;j<(int)trueMahalan.size();j++){
+			outHold+=(testMahalan[i]-trueMahalan[i])*metricValues[i][j]*(testMahalan[i]-trueMahalan[i]);
+		}
+	}
+	return outHold;
+}
+
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix){
     vector<vector<double> > choleskyOut(inMatrix.size(),vector<double>(inMatrix[0].size(),0));
     choleskyOut[0][0]=sqrt(inMatrix[0][0]);
@@ -471,8 +508,6 @@ void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix,
     inMatrix=interMatrix;
 }
 
-
-
 vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn){
     vector<double> outRand(inRand.size(),0);
 
@@ -492,6 +527,16 @@ vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inC
     return outRand;
 }
 
+vector<vector<double> > swapSampleIndices(vector<vector<vector<double> > >& inData){
+	//first Index is sample, second is time point, third is species
+	vector<vector<double> > outData(inData[0][0].size(),vector<double>(inData.size(),0));
+	for(int i=0;i<(int)outData.size();i++){
+		for(int j=0;j<(int)outData[i].size();j++){
+			outData[i][j]=inData[j][0][i];
+		}
+	}
+	return outData;
+}
 
 vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpecies, SolStruct* solChars, int styleFlag){
 	switch(styleFlag){
