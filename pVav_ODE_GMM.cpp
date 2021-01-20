@@ -14,6 +14,7 @@
 #include <functional>
 #include <map>
 #include <mpi.h>
+#include <gsl/gsl_linalg.h>
 	using namespace std;
 #include <boost/random/mersenne_twister.hpp>
 	boost::mt19937 generator;
@@ -41,6 +42,10 @@ int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters
 int loadPvavInputs(vector<double>& speciesVector, vector<double>& initParameters, vector<double>&stoppingTimes, vector<tuple<double,double> >& bounds, string inFile);
 tuple<vector<double>,vector<double> > loadExperimentalData(string inFile);
 vector<tuple<double,double> > pVavSetBounds(vector<double>& inSpeciesCounts,vector<double>& inTimes);
+double calculateMean(vector<double>& inVector);
+vector<vector<double> > invertMatrix(vector<vector<double> >& inData);
+double findMaxElement(vector<vector<double> >& inMatrix);
+vector<double> generateMomentsVector(vector<vector<double> >& inData, int numSpecies);
 
 int main(int argc, char** argv){
 
@@ -60,6 +65,7 @@ int main(int argc, char** argv){
 	bool variancesIncluded(true);
 	//T, I, V, R
 	const int numOfSpecies(6);
+	const int momentVectorSize(2*numOfSpecies+(numOfSpecies-1)*numOfSpecies/2);
 	
 	vector<double> speciesVector={600,200,0,0,60,0};
 
@@ -83,7 +89,7 @@ int main(int argc, char** argv){
 	vector<int> intSpeciesReset=intSpecies;
 	int numOfParticles(stoi(argv[1]));
 	//Number of PSO iterations
-	const int numOfIterations(1000);
+	const int numOfIterations(50);
 	//Number of Gillespie samples to use for distributions
 	const int numOfSamples(2500);
 
@@ -126,8 +132,12 @@ int main(int argc, char** argv){
 
 	int mahalanDimension(2*numOfSpecies+(numOfSpecies/2)*(numOfSpecies-1));
 	vector<vector<double> > mahalanMetric(mahalanDimension,vector<double>(mahalanDimension,0));
+	double sendMetric[mahalanDimension*mahalanDimension];
 	for(int i=0;i<(int)mahalanMetric.size();i++){
 		mahalanMetric[i][i]=1.;
+	}
+	for(int i=0;i<pow(mahalanDimension,2);i++){
+		sendMetric[i]=0;
 	}
     
 	double timeIncrement(0.002);
@@ -206,8 +216,14 @@ int main(int argc, char** argv){
 	}
 	vector<double> trueMahalan;
 	if(variancesIncluded){
-		trueMahalan=generateMahalanVector(trueFullDistribution[0]);
+		vector<vector<double> > firstDataSet(swapSampleIndices(trueFullDistribution));
+		trueMahalan=generateMahalanVector(firstDataSet);
 	}
+
+	for(int i=0;i<(int)trueMahalan.size();i++){
+		cout<<trueMahalan[i]<<endl;
+	}
+
 	
 
 	
@@ -375,7 +391,7 @@ int main(int argc, char** argv){
 					}
 					else{
 						vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
-						threadParticle.currentFitness=mahalanFitness(trueMahalan,firstDataSet,mahalanMetric);
+						threadParticle.currentFitness=fabs(mahalanFitness(trueMahalan,firstDataSet,mahalanMetric));
 					}
 					
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
@@ -394,7 +410,35 @@ int main(int argc, char** argv){
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 					threadParticle.twoBoundPerformUpdate(&generator,parameterPassVector,&fuzzyStruct);
-					
+					if(iteration==numOfIterations-1&&run==(int)numOfRuns/2){
+						vector<vector<double> > wMat(momentVectorSize,vector<double>(momentVectorSize,0));
+						vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
+						for(int k=0;k<numOfSamples;k++){
+							vector<double> interVec(momentVectorSize,0);
+							int fillIndex(0);
+							for(int i=0;i<numOfSpecies;i++){
+								interVec[fillIndex]=firstDataSet[i][k]-trueMahalan[fillIndex];
+								fillIndex++;
+							}
+							for(int i=0;i<numOfSpecies;i++){
+								for(int j=i;j<numOfSpecies;j++){
+									interVec[fillIndex]=firstDataSet[i][k]*firstDataSet[j][k]-trueMahalan[fillIndex];
+									fillIndex++;
+								}
+							}
+							for(int i=0;i<(int)wMat.size();i++){
+								for(int j=0;j<(int)wMat[i].size();j++){
+									wMat[i][j]+=interVec[i]*interVec[j]/(double)numOfSamples;
+								}
+							}
+						}
+						/*const double normalizationConst(1./numOfSamples);
+						for_each(wMat.begin(),wMat.end(),[&normalizationConst](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,normalizationConst));});*/
+						wMat=invertMatrix(wMat);
+						double maxValue(1/findMaxElement(wMat));
+						for_each(wMat.begin(),wMat.end(),[&maxValue](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,maxValue));});
+						mahalanMetric=wMat;
+					}
 				}
 				
 			}
@@ -612,6 +656,69 @@ vector<tuple<double,double> > pVavSetBounds(vector<double>& inSpeciesCounts,vect
 	outBounds[5]=make_tuple(k4Min,k4Max);
 
 	return outBounds;
+}
+
+vector<double> generateMomentsVector(vector<vector<double> >& inData, int numSpecies){
+	int fillIndex(0);
+	vector<double> trueMoments(2*numSpecies+(numSpecies-1)*numSpecies/2);
+	for(int i=0;i<numSpecies;i++){
+		trueMoments[fillIndex]=calculateMoment(inData[i],1);
+		fillIndex++;
+	}
+	for(int i=0;i<numSpecies;i++){
+		for(int j=i;j<numSpecies;j++){
+			double sumHold(0);
+			for(int k=0;k<(int)inData[i].size();k++){
+				sumHold+=inData[i][k]*inData[j][k];
+			}
+			trueMoments[fillIndex]=sumHold/(double)inData[i].size();
+			fillIndex++;
+		}
+	}
+	return trueMoments;
+}
+
+double calculateMean(vector<double>& inVector){
+	double outValue(0);
+	return accumulate(inVector.begin(),inVector.end(),outValue)/(double)inVector.size();
+}
+
+double findMaxElement(vector<vector<double> >& inMatrix){
+	double outValue(0);
+	for(int i=0;i<(int)inMatrix.size();i++){
+		auto iter=max_element(inMatrix[i].begin(),inMatrix[i].end());
+		if(outValue<*iter){
+			outValue=*iter;
+		}
+	}
+	return outValue;
+}
+// Data input looks like timeIndex, speciesIndex, runIndex
+
+vector<vector<double> > invertMatrix(vector<vector<double> >& inMatrix){
+	const int N(inMatrix.size());
+
+	vector<vector<double> > outMatrix=inMatrix;
+	double inData[(int)pow(N,2)];
+	for(int i=0;i<N;i++){
+		for(int j=0;j<N;j++){
+			inData[i*inMatrix.size()+j]=inMatrix[i][j];
+		}
+	}
+	double inverseMat[(int)pow(N,2)];
+	int s;
+	gsl_matrix_view m= gsl_matrix_view_array(inData,N,N);
+	gsl_matrix_view inv=gsl_matrix_view_array(inverseMat,N,N);
+	gsl_permutation *p = gsl_permutation_alloc(N);
+
+	gsl_linalg_LU_decomp(&m.matrix,p,&s);
+	gsl_linalg_LU_invert(&m.matrix,p,&inv.matrix);
+	for(int i=0;i<N;i++){
+		for(int j=0;j<N;j++){
+			outMatrix[i][j]=gsl_matrix_get(&inv.matrix,i,j);
+		}
+	}
+	return outMatrix;
 }
 
 

@@ -93,7 +93,6 @@ int main(){
 			}
 		}
 	}
-	wMat=invertMatrix(wMat);
 	const double normalizationConst(1./N);
 	for_each(wMat.begin(),wMat.end(),[&normalizationConst](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,normalizationConst));});
 	wMat=invertMatrix(wMat);
