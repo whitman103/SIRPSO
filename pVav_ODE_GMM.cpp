@@ -220,9 +220,7 @@ int main(int argc, char** argv){
 		trueMahalan=generateMahalanVector(firstDataSet);
 	}
 
-	for(int i=0;i<(int)trueMahalan.size();i++){
-		cout<<trueMahalan[i]<<endl;
-	}
+	
 
 	
 
