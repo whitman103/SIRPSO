@@ -343,18 +343,18 @@ int main(int argc, char** argv){
 							mahalanMetric=wMat;
 							for(int i=0;i<mahalanDimension;i++){
 								for(int j=0;j<mahalanDimension;j++){
-									mahalanArray[i*mahalanDimension+j]=mahalanMetric[i][j];
+									metricArray[i*mahalanDimension+j]=mahalanMetric[i][j];
 								}
 							}
-							MPI_Send(mahalanArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,0,MPI_COMM_WORLD);
+							MPI_Send(metricArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,0,MPI_COMM_WORLD);
 						}
 						if(taskID==0){
-							MPI_Recv(mahalanArray,mahalanDimension*mahalanDimension, MPI_DOUBLE, bestParticleIndex,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+							MPI_Recv(metricArray,mahalanDimension*mahalanDimension, MPI_DOUBLE, bestParticleIndex,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 						}
-						MPI_Bcast(mahalanArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,MPI_COMM_WORLD);
+						MPI_Bcast(metricArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,MPI_COMM_WORLD);
 						for(int i=0;i<mahalanDimension;i++){
 							for(int j=0;j<mahalanDimension;j++){
-								mahalanMetric[i][j]=mahalanArray[i*mahalanDimension+j];
+								mahalanMetric[i][j]=metricArray[i*mahalanDimension+j];
 							}
 						}
 					}
