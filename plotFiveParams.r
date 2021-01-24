@@ -1,6 +1,7 @@
 Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs9.27/bin/gswin64c.exe")
 library(extrafont)
 library(Cairo)
+library(colormap)
 graphics.off()
 
 
@@ -12,7 +13,7 @@ if(deterSwitch){
 	trueString=paste(baseFolder,precursor,"_outRunge_noNoise.txt",sep="")
 }
 if(!deterSwitch){
-	baseFolder="D:\\Downloads\\12_04_2020\\DataFolder_ODEMeansOnly_1\\" 
+	baseFolder="D:\\Downloads\\01_20_2021\\DataFolder_GMMIdentity_0\\" 
 	precursor="extrinsicNoise"
 	trueString=paste(baseFolder,precursor,"_outRunge_testNoise.txt",sep="")
 }
