@@ -161,52 +161,12 @@ int main(int argc, char** argv){
 	switch(solutionStyle){
 		case 0:
 		{
-			if(!exNoise){
-				resetSpecies=speciesVector;
-				trueArray=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-			}
-			else{
-				if(!variancesIncluded){
-					for(int sample=0;sample<numOfSamples;sample++){
-						speciesVector=resetSpecies;
-						speciesVector[0]=extrinsicNoiseGenerators[0]();
-						speciesVector[1]=extrinsicNoiseGenerators[1]();
-						speciesVector[4]=extrinsicNoiseGenerators[2]();
-						vector<vector<double> > noiseData=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-						for(int i=0;i<(int)trueArray.size();i++){
-							for(int j=0;j<(int)trueArray[i].size();j++){
-								trueArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
-							}
-						}
-					}
-				}
-				else{
-					for(int sample=0;sample<numOfSamples;sample++){
-						speciesVector=resetSpecies;
-						speciesVector[0]=extrinsicNoiseGenerators[0]();
-						speciesVector[1]=extrinsicNoiseGenerators[1]();
-						speciesVector[4]=extrinsicNoiseGenerators[2]();
-						trueFullDistribution[sample]=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-					}
-				}
-				
-			}
-		}
-		break;
-		case 1:
-		{
-			if(!exNoise){
-				intSpecies=intSpeciesReset;
-				Gillespie ReactionObject1("pVavCoeffs");
-				ReactionObject1.initializeData("pVavConsts",ReactionObject1.reactConsts,intSpeciesReset);
-				trueDistributions=pVav_Gillespie(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);
-			}
-			else{
-				intSpecies=intSpeciesReset;
-				Gillespie ReactionObject1("pVavCoeffs");
-				ReactionObject1.initializeData("pVavConsts",ReactionObject1.reactConsts,intSpeciesReset);
-				trueDistributions=pVav_Gillespie(&trueParticle, &ReactionObject1, stoppingTimes, intSpecies, numOfSamples);//Needs to be updated for extrinsic noise
-
+			for(int sample=0;sample<numOfSamples;sample++){
+				speciesVector=resetSpecies;
+				speciesVector[0]=extrinsicNoiseGenerators[0]();
+				speciesVector[1]=extrinsicNoiseGenerators[1]();
+				speciesVector[4]=extrinsicNoiseGenerators[2]();
+				trueFullDistribution[sample]=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 			}
 		}
 		break;
@@ -229,11 +189,8 @@ int main(int argc, char** argv){
 	vector<FuzzyTree> FuzzyStructure(numOfParticles,FuzzyTree(inDelta));
 
 	ofstream outRunge;
-	if(!exNoise){
-		outRunge.open(outputFolder+customString+"outRunge_noNoise.txt");
-	} else{
-		outRunge.open(outputFolder+customString+"outRunge_testNoise.txt");
-	}
+	
+	outRunge.open(outputFolder+customString+"outRunge_testNoise.txt");
 	for(int i=0;i<(int)trueParticle.currentSolution.size();i++){
 		outRunge<<trueParticle.currentSolution[i]<<" ";
 	}
@@ -245,6 +202,8 @@ int main(int argc, char** argv){
 	double fitnessCollection[numOfParticles];
 	double parameterPassVector[sizeOfParameterVector];
 	double parameterMatrixHold[sizeOfParameterVector*numOfParticles];
+	double metricArray[mahalanDimension*mahalanDimension];
+	int bestParticleIndex(-1);
 	
 	int nTasks(-1);
 	int taskID(-1);
@@ -294,43 +253,16 @@ int main(int argc, char** argv){
 				vector<vector<vector<double> > > testFullDistributions(numOfSamples);
 				vector<vector<double> > resetTestArray=testArray;
 				speciesVector=resetSpecies;
-				if(!exNoise){
-					testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-				}
-				else{
-					if(!variancesIncluded){
-						for(int sample=0;sample<numOfSamples;sample++){
-							speciesVector=resetSpecies;
-							speciesVector[0]=extrinsicNoiseGenerators[0]();
-							speciesVector[1]=extrinsicNoiseGenerators[1]();
-							speciesVector[4]=extrinsicNoiseGenerators[2]();
-							vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-							for(int i=0;i<(int)testArray.size();i++){
-								for(int j=0;j<(int)testArray[i].size();j++){
-									testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
-								}
-							}
-						}
-					}
-					else{
-						for(int sample=0;sample<numOfSamples;sample++){
-							speciesVector=resetSpecies;
-							speciesVector[0]=extrinsicNoiseGenerators[0]();
-							speciesVector[1]=extrinsicNoiseGenerators[1]();
-							speciesVector[4]=extrinsicNoiseGenerators[2]();
-							testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-						}
-					}
-					
+				for(int sample=0;sample<numOfSamples;sample++){
+					speciesVector=resetSpecies;
+					speciesVector[0]=extrinsicNoiseGenerators[0]();
+					speciesVector[1]=extrinsicNoiseGenerators[1]();
+					speciesVector[4]=extrinsicNoiseGenerators[2]();
+					testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 				}
 
-				if(!variancesIncluded){
-					threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
-				}
-				else{
-					vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
-					threadParticle.currentFitness=mahalanFitness(trueMahalan,firstDataSet,mahalanMetric);
-				}
+				vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
+				threadParticle.currentFitness=mahalanFitness(trueMahalan,firstDataSet,mahalanMetric);
 				threadParticle.bestFitness=threadParticle.currentFitness;
 				threadParticle.bestSolution=threadParticle.currentSolution;
 				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
@@ -354,42 +286,16 @@ int main(int argc, char** argv){
 				for(int iteration=0;iteration<numOfIterations;iteration++){
 					speciesVector=resetSpecies;
 					testArray=resetTestArray;
-					if(!exNoise){
-						testArray=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-					}
-					else{
-						if(!variancesIncluded){
-							for(int sample=0;sample<numOfSamples;sample++){
-								speciesVector=resetSpecies;
-								speciesVector[0]=extrinsicNoiseGenerators[0]();
-								speciesVector[1]=extrinsicNoiseGenerators[1]();
-								speciesVector[4]=extrinsicNoiseGenerators[2]();
-								vector<vector<double> > noiseData=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-								for(int i=0;i<(int)testArray.size();i++){
-									for(int j=0;j<(int)testArray[i].size();j++){
-										testArray[i][j]+=noiseData[i][j]/(double)numOfSamples;
-									}
-								}
-							}
-						}
-						else{
-							for(int sample=0;sample<numOfSamples;sample++){
-								speciesVector=resetSpecies;
-								speciesVector[0]=extrinsicNoiseGenerators[0]();
-								speciesVector[1]=extrinsicNoiseGenerators[1]();
-								speciesVector[4]=extrinsicNoiseGenerators[2]();
-								testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-							}
-						}
+					for(int sample=0;sample<numOfSamples;sample++){
+						speciesVector=resetSpecies;
+						speciesVector[0]=extrinsicNoiseGenerators[0]();
+						speciesVector[1]=extrinsicNoiseGenerators[1]();
+						speciesVector[4]=extrinsicNoiseGenerators[2]();
+						testFullDistributions[sample]=generateData(&threadParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
 					}
 					
-					if(!variancesIncluded){
-						threadParticle.currentFitness=fitnessFunction(trueArray,testArray);
-					}
-					else{
-						vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
-						threadParticle.currentFitness=fabs(mahalanFitness(trueMahalan,firstDataSet,mahalanMetric));
-					}
+					vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
+					threadParticle.currentFitness=fabs(mahalanFitness(trueMahalan,firstDataSet,mahalanMetric));
 					
 					if(threadParticle.currentFitness<threadParticle.bestFitness){
 						threadParticle.bestSolution=threadParticle.currentSolution;
@@ -402,114 +308,59 @@ int main(int argc, char** argv){
 					MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 					if(taskID==0){
-						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
+						bestParticleIndex=checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
 					}
 					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
 					threadParticle.twoBoundPerformUpdate(&generator,parameterPassVector,&fuzzyStruct);
 					if(iteration==numOfIterations-1&&run==(int)numOfRuns/2){
-						vector<vector<double> > wMat(momentVectorSize,vector<double>(momentVectorSize,0));
-						vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
-						for(int k=0;k<numOfSamples;k++){
-							vector<double> interVec(momentVectorSize,0);
-							int fillIndex(0);
-							for(int i=0;i<numOfSpecies;i++){
-								interVec[fillIndex]=firstDataSet[i][k]-trueMahalan[fillIndex];
-								fillIndex++;
-							}
-							for(int i=0;i<numOfSpecies;i++){
-								for(int j=i;j<numOfSpecies;j++){
-									interVec[fillIndex]=firstDataSet[i][k]*firstDataSet[j][k]-trueMahalan[fillIndex];
+						if(taskID==bestParticleIndex){
+							vector<vector<double> > wMat(momentVectorSize,vector<double>(momentVectorSize,0));
+							vector<vector<double> > firstDataSet(swapSampleIndices(testFullDistributions));
+							for(int k=0;k<numOfSamples;k++){
+								vector<double> interVec(momentVectorSize,0);
+								int fillIndex(0);
+								for(int i=0;i<numOfSpecies;i++){
+									interVec[fillIndex]=firstDataSet[i][k]-trueMahalan[fillIndex];
 									fillIndex++;
 								}
-							}
-							for(int i=0;i<(int)wMat.size();i++){
-								for(int j=0;j<(int)wMat[i].size();j++){
-									wMat[i][j]+=interVec[i]*interVec[j]/(double)numOfSamples;
+								for(int i=0;i<numOfSpecies;i++){
+									for(int j=i;j<numOfSpecies;j++){
+										interVec[fillIndex]=firstDataSet[i][k]*firstDataSet[j][k]-trueMahalan[fillIndex];
+										fillIndex++;
+									}
+								}
+								for(int i=0;i<(int)wMat.size();i++){
+									for(int j=0;j<(int)wMat[i].size();j++){
+										wMat[i][j]+=interVec[i]*interVec[j]/(double)numOfSamples;
+									}
 								}
 							}
+							const double normalizationConst(1./numOfSamples);
+							for_each(wMat.begin(),wMat.end(),[&normalizationConst](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,normalizationConst));});
+							wMat=invertMatrix(wMat);
+							double maxValue(1/findMaxElement(wMat));
+							for_each(wMat.begin(),wMat.end(),[&maxValue](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,maxValue));});
+							mahalanMetric=wMat;
+							for(int i=0;i<mahalanDimension;i++){
+								for(int j=0;j<mahalanDimension;j++){
+									metricArray[i*mahalanDimension+j]=mahalanMetric[i][j];
+								}
+							}
+							MPI_Send(metricArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,0,MPI_COMM_WORLD);
 						}
-						/*const double normalizationConst(1./numOfSamples);
-						for_each(wMat.begin(),wMat.end(),[&normalizationConst](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,normalizationConst));});*/
-						wMat=invertMatrix(wMat);
-						double maxValue(1/findMaxElement(wMat));
-						for_each(wMat.begin(),wMat.end(),[&maxValue](vector<double>& v){transform(v.begin(),v.end(),v.begin(),bind(multiplies<double>(),std::placeholders::_1,maxValue));});
-						mahalanMetric=wMat;
+						if(taskID==0){
+							MPI_Recv(metricArray,mahalanDimension*mahalanDimension, MPI_DOUBLE, bestParticleIndex,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+						}
+						MPI_Bcast(metricArray,mahalanDimension*mahalanDimension,MPI_DOUBLE,0,MPI_COMM_WORLD);
+						for(int i=0;i<mahalanDimension;i++){
+							for(int j=0;j<mahalanDimension;j++){
+								mahalanMetric[i][j]=metricArray[i*mahalanDimension+j];
+							}
+						}
 					}
 				}
-				
 			}
 			break;
-			/*case 1:
-			{
-				vector<vector<double> > testArray;
-				
-                vector<vector<vector<int> > > testDistributions;
-			
-				intSpecies=intSpeciesReset;
-				if(!exNoise){
-					intSpecies=intSpeciesReset;
-					testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
-				}
-				else{
-					intSpecies=intSpeciesReset;
-					testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);//needs to be updated for extrinsic noise
-				}
-
-				
-
-				threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_MultipleTrans");
-				threadParticle.bestFitness=threadParticle.currentFitness;
-				threadParticle.bestSolution=threadParticle.currentSolution;
-				for(int i=0;i<(int)threadParticle.currentSolution.size();i++){
-					parameterPassVector[i]=threadParticle.bestSolution[i];
-				}
-				
-				MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-				MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-				
-				if(taskID==0){
-					checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness, numOfParameters);
-				}
-				
-				MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
-				
-				threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
-
-				//iterate
-				for(int iteration=0;iteration<numOfIterations;iteration++){
-					
-					if(!exNoise){
-						intSpecies=intSpeciesReset;
-						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);
-					}
-					else{
-						intSpecies=intSpeciesReset;
-						testDistributions=pVav_Gillespie(&threadParticle, &threadReaction, stoppingTimes, intSpecies, numOfSamples);//needs to be updated for extrinsic noise
-					}
-
-					threadParticle.currentFitness=fitnessFunction_pVav(trueDistributions,testDistributions,"pVav_Means_MultipleTrans");
-					if(threadParticle.currentFitness<threadParticle.bestFitness){
-						threadParticle.bestSolution=threadParticle.currentSolution;
-						threadParticle.bestFitness=threadParticle.currentFitness;
-					}
-					for(int i=0;i<(int)threadParticle.bestSolution.size();i++){
-						parameterPassVector[i]=threadParticle.bestSolution[i];
-					}
-
-					MPI_Gather(&threadParticle.currentFitness, 1, MPI_DOUBLE, fitnessCollection, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-					MPI_Gather(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, parameterMatrixHold, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-					if(taskID==0){
-						checkForNewGlobalBest(fitnessCollection, parameterMatrixHold, parameterPassVector, numOfParticles, globalBestFitness,numOfParameters);
-					}
-					MPI_Bcast(parameterPassVector, sizeOfParameterVector, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-					
-					threadParticle.performUpdate(&generator,parameterPassVector,&fuzzyStruct);
-
-
-					
-				}
-			}*/
 			default:
 			break;
 		}

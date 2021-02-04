@@ -558,7 +558,7 @@ vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpe
 	}
 }
 
-void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness, int numOfParameters){
+int checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHold, double* parameterPassVector, int numOfParticles, double& globalFitness, int numOfParameters){
 	int bestParticle(0);
 	double bestFitness(1e13);
 	for(int i=0;i<numOfParticles;i++){
@@ -571,6 +571,7 @@ void checkForNewGlobalBest(double* fitnessCollection, double* parameterMatrixHol
 		parameterPassVector[i]=parameterMatrixHold[bestParticle*numOfParameters+i];
 	}
 	globalFitness=bestFitness;
+	return bestParticle;
 }
 	
 vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns){
