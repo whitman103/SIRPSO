@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\cygwin64\\lib\\gcc\\x86_64-pc-cygwin\\10\\include\\**",
+                "C:\\cygwin64\\usr\\include\\**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+				"_UNICODE",
+				"__SIZE_TYPE__=unsigned int"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "C:/cygwin64/bin/g++.exe",
+            "compilerArgs": [
+                "-std=c++17"
+            ]
+        }
+    ],
+    "version": 4
+}

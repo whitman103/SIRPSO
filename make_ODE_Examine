@@ -41,11 +41,11 @@
 ########################################################################### 
 
 # The base for the names of the makefile, executable command, etc.
-BASE=  experimentalData_ODE
+BASE=  ODE_Examine
 
 # Put all C++ (or other) source files here.  NO SPACES after continuation \'s.
 SRCS= \
-experimentalData_ODE.cpp\
+ODE_Examine.cpp\
 SIR_MPI.cpp\
 GillespieFunctions.cpp\
 pVavInteractions.cpp
@@ -89,8 +89,8 @@ ZIPFILE= $(BASE).zip
 # LIBS          A list of libraries 
 #
 
-CXX= mpic++
-CFLAGS=  -g -O2 -std=c++17
+CXX= g++
+CFLAGS=  -g -O0 -std=c++17
 CWARNS= -Wall -W -Wshadow -fno-common 
 MOREFLAGS= -Wpedantic -Wpointer-arith -Wcast-qual -Wcast-align \
            -Wwrite-strings -fshort-enums 

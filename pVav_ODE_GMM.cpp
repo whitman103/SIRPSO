@@ -61,7 +61,7 @@ int main(int argc, char** argv){
     
 
     bool exNoise(true);
-	bool resetParameter(true);
+	bool resetParameter(false);
 	bool variancesIncluded(true);
 	//T, I, V, R
 	const int numOfSpecies(6);
@@ -187,7 +187,6 @@ int main(int argc, char** argv){
 						speciesVector[1]=extrinsicNoiseGenerators[1]();
 						speciesVector[4]=extrinsicNoiseGenerators[2]();
 						trueFullDistribution[sample]=generateData(&trueParticle,speciesVector,&solutionStructure,styleMap["RungeKutta"]);
-						
 					}
 				}
 				
