@@ -10,16 +10,16 @@
 
 using boost::mt19937;
 
-typedef struct Sharpener{
-	double high, low, medium;
+typedef struct Sharpener {
+    double high, low, medium;
 };
 
-typedef struct deltaStates{
-	double same, near, far;
+typedef struct deltaStates {
+    double same, near, far;
 };
 
-typedef struct phiStates{
-	double better, same, worse;
+typedef struct phiStates {
+    double better, same, worse;
 };
 
 class FuzzyTree {
@@ -46,7 +46,7 @@ public:
     Sharpener cognitiveMap;
     Sharpener LMap;
     Sharpener UMap;
-    map<int,string> linguisticMap;
+    map<int, string> linguisticMap;
 
     void setParameters();
     void setInertia();
@@ -64,17 +64,17 @@ public:
 
 class Particle {
 public:
-    Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
-    Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
-    Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
-    Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double,double> > bounds, vector<double(*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+    Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*, vector<double>&)> initFunctions, tuple<double, double, double, double, double> initParameters, int scalingSize);
+    Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*, vector<double>&)> initFunctions, int scalingSize);
+    Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*, vector<double>&)> initFunctions, int scalingSize);
+    Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double, double> > bounds, vector<double(*)(Particle*, vector<double>&)> initFunctions, int scalingSize);
     ~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
     vector<double> currentVelocity;
     vector<double> bounds;
-    vector<tuple<double,double> > twoBounds;
-    vector<double (*)(Particle*,vector<double>&)> interactionFunctions;
+    vector<tuple<double, double> > twoBounds;
+    vector<double (*)(Particle*, vector<double>&)> interactionFunctions;
     double bestFitness;
     double currentFitness;
     double beta, delta, c, p, gamma;
@@ -120,7 +120,7 @@ vector<double> generateMahalanVector(vector<vector<double> >& inData);
 
 vector<vector<double> > swapSampleIndices(vector<vector<vector<double> > >& inData);
 
-double mahalanFitness(vector<double>& inTrueFlattened,vector<vector<double> >& testIn, vector<vector<double> >& metricValues);
+double mahalanFitness(vector<double>& inTrueFlattened, vector<vector<double> >& testIn, vector<vector<double> >& metricValues);
 
 vector<vector<double> > generateCholesky(vector<vector<double> >& inMatrix);
 
@@ -144,7 +144,7 @@ vector<vector<vector<double> > > performGillespieSimulation(Particle* inParticle
 
 tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<double> > >& inDist);
 
-tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<int> > >&inDist);
+tuple<vector<vector<double> >, vector<vector<double> > > calculateMeansAndVar(vector<vector<vector<int> > >& inDist);
 
 tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns);
 
@@ -152,7 +152,7 @@ tuple<vector<vector<double> >, vector<vector<double> > > generateGillespieData(P
 
 vector<vector<vector<double> > > generateDistributions(Particle* inParticle, Gillespie* inReactionObject, vector<double>& reportTimes, vector<int>& specNum, int numOfRuns, boost::mt19937* inGenerator, string outFile);
 
-tuple<double,double,double,double,double> readParameterData(string inFile);
+tuple<double, double, double, double, double> readParameterData(string inFile);
 
 vector<double> readVectorFile(string inString);
 
