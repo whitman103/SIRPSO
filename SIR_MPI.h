@@ -10,81 +10,88 @@
 
 using boost::mt19937;
 
+typedef struct Sharpener{
+	double high, low, medium;
+};
 
-class FuzzyTree{
-	public:
-	FuzzyTree(double inDelta);
-	~FuzzyTree();
-	
-	double phi, phiNormalization;
-	double delta, delta1, delta2, delta3, deltaMax;
-	//phi Membership values are set as better, same, worse
-	vector<double> phiMembershipValues;
-	
-	
-	//delta Membership values are set as same, near, far
-	vector<double> deltaMembershipValues;
-	
-	double inertia;
-	double social;
-	double cognitive;
-	double L;
-	double U;
-	map<string,double> inertiaMap;
-	map<string,double> socialMap;
-	map<string,double> cognitiveMap;
-	map<string,double> LMap;
-	map<string,double> UMap;
-	map<int,string> linguisticMap;
-	
-	void setParameters();
-	void setInertia();
-	void setSocial();
-	void setCognitive();
-	void setL();
-	void setU();
-	void calculatePhiMembershipValues();
-	void calculateDeltaMembershipValues();
-	
-	void calculatePhi(double lastFitness, double currentFitness);
-	
-	
-	
-	private:
-	
+typedef struct deltaStates{
+	double same, near, far;
+};
+
+typedef struct phiStates{
+	double better, same, worse;
+};
+
+class FuzzyTree {
+public:
+    FuzzyTree(double inDelta);
+    ~FuzzyTree();
+
+    double phi, phiNormalization;
+    double delta, delta1, delta2, delta3, deltaMax;
+    //phi Membership values are set as better, same, worse
+    phiStates phiMembershipValues;
+
+
+    //delta Membership values are set as same, near, far
+    deltaStates deltaMembershipValues;
+
+    double inertia;
+    double social;
+    double cognitive;
+    double L;
+    double U;
+    Sharpener inertiaMap;
+    Sharpener socialMap;
+    Sharpener cognitiveMap;
+    Sharpener LMap;
+    Sharpener UMap;
+    map<int,string> linguisticMap;
+
+    void setParameters();
+    void setInertia();
+    void setSocial();
+    void setCognitive();
+    void setL();
+    void setU();
+    void calculatePhiMembershipValues();
+    void calculateDeltaMembershipValues();
+
+    void calculatePhi(double lastFitness, double currentFitness);
+
 };
 
 
-class Particle{
-    public:
+class Particle {
+public:
     Particle(int numOfParameters, vector<double> initBounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, tuple<double,double,double,double,double> initParameters, int scalingSize);
-	Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
-	Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
-	Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double,double> > bounds, vector<double(*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
-	~Particle();
+    Particle(int numOfParameters, vector<double> Parameters, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+    Particle(int numOfParameters, vector<double> Parameters, vector<double> bounds, vector<double (*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+    Particle(int numOfParameters, vector<double> Parameters, vector<tuple<double,double> > bounds, vector<double(*)(Particle*,vector<double>&)> initFunctions, int scalingSize);
+    ~Particle();
     vector<double> currentSolution;
     vector<double> bestSolution;
     vector<double> currentVelocity;
     vector<double> bounds;
-	vector<tuple<double,double> > twoBounds;
+    vector<tuple<double,double> > twoBounds;
     vector<double (*)(Particle*,vector<double>&)> interactionFunctions;
     double bestFitness;
     double currentFitness;
     double beta, delta, c, p, gamma;
-	double k0, k1, k2, k3, k4, k5;
+    double k0, k1, k2, k3, k4, k5;
     void unwrapParameters();
 
     void dumpParticleDetails(ofstream* outStream);
     double performUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
-	double twoBoundPerformUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
-	vector<double> convertFromParticleToGillespie();
-	int scalingFactor;
-	void divideBeta();
-	void multiplyBeta();
-	void unwrap_pVavParameters();
-	vector<double> pVavConvertParticleGillespie();
+    double twoBoundPerformUpdate(boost::mt19937* inRand, double* globalBest, FuzzyTree* fuzzyStruct);
+    vector<double> convertFromParticleToGillespie();
+    int scalingFactor;
+    void divideBeta();
+    void multiplyBeta();
+    void unwrap_pVavParameters();
+    vector<double> pVavConvertParticleGillespie();
 
-    private:
+private:
 };
 
 double sgn(double in);
@@ -121,10 +128,10 @@ void loadCovariance(vector<double>& outMeans, vector<vector<double> >& inMatrix,
 
 vector<double> transformInit(vector<double> inRand, vector<vector<double> >& inCov, vector<double>& inMean, boost::mt19937* generatorIn);
 
-typedef struct{
-	bool RungeOrGille;
-	double timeIncrement;
-	vector<double> stoppingTimes;
+typedef struct {
+    bool RungeOrGille;
+    double timeIncrement;
+    vector<double> stoppingTimes;
 } SolStruct;
 
 vector<vector<double> > generateData(Particle* inParticle, vector<double>& inSpecies, SolStruct* solChars, int styleFlag);

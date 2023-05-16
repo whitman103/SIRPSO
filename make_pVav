@@ -90,13 +90,13 @@ ZIPFILE= $(BASE).zip
 #
 
 CXX= g++
-CFLAGS=  -g -O2 -std=c++17
+CFLAGS=  -g -O2 -std=c++17 -I/opt/homebrew/include
 CWARNS= -Wall -W -Wshadow -fno-common 
 MOREFLAGS= -Wpedantic -Wpointer-arith -Wcast-qual -Wcast-align \
            -Wwrite-strings -fshort-enums 
 
 # add relevant libraries and link options
-LIBS= 
+LIBS=
 LDFLAGS= 
  
 ###########################################################################
